@@ -1,25 +1,78 @@
 import { useState } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
-import { Button, Space, DatePicker, version, ConfigProvider } from "antd";
+import { Button, Space, DatePicker, version } from "antd";
+
+import {
+  PageContainer,
+  ProBreadcrumb,
+  ProLayout,
+} from "@ant-design/pro-components";
+
 import "./App.css";
+
 function App() {
   const [count, setCount] = useState(0);
 
   return (
-    <>
-      <ConfigProvider
-        // theme={{
-        //   token: {
-        //     // Seed Token，影响范围大
-        //     colorPrimary: "#00b96b",
-        //     borderRadius: 2,
-
-        //     // 派生变量，影响范围小
-        //     colorBgContainer: "#f6ffed",
-        //   },
-        // }}
+    <ProLayout
+      location={{
+        pathname: "/admin/process/edit/123",
+      }}
+      layout="mix"
+      ErrorBoundary={false}
+      headerContentRender={() => <ProBreadcrumb />}
+      breadcrumbRender={(routers = []) => [
+        {
+          path: "/",
+          title: "主页",
+        },
+        {
+          path: "/",
+          title: "测试页",
+        },
+        ...routers,
+      ]}
+      menuDataRender={() => [
+        {
+          path: "/welcome",
+          name: "欢迎",
+        },
+        {
+          path: "/admin",
+          name: "管理",
+          children: [
+            {
+              name: "申请单列表",
+              path: "/admin/process",
+            },
+            {
+              name: "申请单详情",
+              path: "/admin/process/detail/:id",
+              hideInMenu: true,
+            },
+            {
+              name: "编辑申请单",
+              path: "/admin/process/edit/:id",
+              hideInMenu: true,
+            },
+            {
+              name: "添加申请单",
+              path: "/admin/process/add",
+              hideInMenu: true,
+            },
+          ],
+        },
+      ]}
+    >
+      {/* <Content /> */}
+      <PageContainer
+        className="w-full"
+        content="欢迎使用"
+        breadcrumbRender={false}
       >
+        <div>Hello World</div>
+
         <div>
           <a href="https://vitejs.dev" target="_blank">
             <img src={viteLogo} className="logo" alt="Vite logo" />
@@ -28,7 +81,6 @@ function App() {
             <img src={reactLogo} className="logo react" alt="React logo" />
           </a>
         </div>
-        <h1>Vite + React</h1>
 
         <div style={{ padding: "0 24px" }}>
           <h1 className="text-red-400">antd version: {version}</h1>
@@ -49,8 +101,8 @@ function App() {
         <p className="read-the-docs">
           Click on the Vite and React logos to learn more
         </p>
-      </ConfigProvider>
-    </>
+      </PageContainer>
+    </ProLayout>
   );
 }
 

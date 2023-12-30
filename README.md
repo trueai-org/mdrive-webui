@@ -48,4 +48,6 @@ yarn add antd
 yarn add -D tailwindcss postcss autoprefixer
 npx tailwindcss init -p
 
+# 添加组件
+yarn add @ant-design/pro-components
 ```

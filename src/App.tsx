@@ -1,0 +1,57 @@
+import { useState } from "react";
+import reactLogo from "./assets/react.svg";
+import viteLogo from "/vite.svg";
+import { Button, Space, DatePicker, version, ConfigProvider } from "antd";
+import "./App.css";
+function App() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <>
+      <ConfigProvider
+        // theme={{
+        //   token: {
+        //     // Seed Token，影响范围大
+        //     colorPrimary: "#00b96b",
+        //     borderRadius: 2,
+
+        //     // 派生变量，影响范围小
+        //     colorBgContainer: "#f6ffed",
+        //   },
+        // }}
+      >
+        <div>
+          <a href="https://vitejs.dev" target="_blank">
+            <img src={viteLogo} className="logo" alt="Vite logo" />
+          </a>
+          <a href="https://react.dev" target="_blank">
+            <img src={reactLogo} className="logo react" alt="React logo" />
+          </a>
+        </div>
+        <h1>Vite + React</h1>
+
+        <div style={{ padding: "0 24px" }}>
+          <h1 className="text-red-400">antd version: {version}</h1>
+          <Space>
+            <DatePicker />
+            <Button type="primary">Primary Button</Button>
+          </Space>
+        </div>
+
+        <div className="card">
+          <button onClick={() => setCount((count) => count + 1)}>
+            count is {count}
+          </button>
+          <p>
+            Edit <code>src/App.tsx</code> and save to test HMR
+          </p>
+        </div>
+        <p className="read-the-docs">
+          Click on the Vite and React logos to learn more
+        </p>
+      </ConfigProvider>
+    </>
+  );
+}
+
+export default App;

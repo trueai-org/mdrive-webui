@@ -80,4 +80,6 @@ yarn add @ant-design/pro-components
 # 25. 添加 react-app-rewired-plugin-tailwindcss
 # 26. 配置 HtmlPlugin 替换标题
 # 27. 配置 HtmlPlugin 添加 favicon
+# 28. 配置 Copyright
+# 29. 配置 alias
 ```

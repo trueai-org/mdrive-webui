@@ -15,6 +15,7 @@ module.exports = {
       { allowConstantExport: true },
     ],
 
+    // 禁用 any 类型检查，允许 any
     '@typescript-eslint/no-explicit-any': 'off',
   },
 }

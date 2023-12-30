@@ -13,6 +13,8 @@
   "dependencies": {
     "@ant-design/pro-components": "^2.6.43",
     "antd": "^5.12.5",
+    "axios": "^1.6.3",
+    "fetch-jsonp": "^1.3.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

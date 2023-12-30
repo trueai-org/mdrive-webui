@@ -5,10 +5,15 @@ import { ProLayout } from "@ant-design/pro-components";
 import defaultProps from "./_defaultProps";
 
 import "./App.css";
+import OAuthComponent from "./components/OAuthComponent";
+import { useOAuth } from "./hooks/useOAuth";
+
 
 function App() {
   // const [count, setCount] = useState(0);
   const [pathname, setPathname] = useState("/list/sub-page/sub-sub-page1");
+
+  const { isVisible, show, hide } = useOAuth();
 
   return (
     <ProLayout
@@ -31,6 +36,14 @@ function App() {
       layout="top"
     >
       这是内容区域
+      <button onClick={show}>Show OAuth Modal</button>
+      {isVisible && (
+        <OAuthComponent
+          clientId="12561ebaf6504bea8a611932684c86f6"
+          redirectUri="https://api.duplicati.net/api/open/aliyundrive"
+          onClose={hide}
+        />
+      )}
       {/* <PageContainer
         extra={[
           <Button key="3">操作</Button>,

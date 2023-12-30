@@ -9,6 +9,8 @@ export default {
   },
   plugins: [],
   corePlugins: {
+    // 禁用预检，为了兼容 antd 样式
+    // https://tailwindcss.com/docs/preflight
     preflight: false
   }
 }

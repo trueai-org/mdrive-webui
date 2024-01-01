@@ -97,7 +97,7 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
         footer={null}
       >
         {oauthInProgress ? (
-          <p>授权中</p>
+          <p>授权中 {token || '-'}</p>
         ) : (
           <Button type="primary" onClick={startOAuth}>
             扫码登录

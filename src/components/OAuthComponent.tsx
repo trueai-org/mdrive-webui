@@ -1,7 +1,7 @@
-// OAuthComponent.tsx
 import React, { useState, useCallback, useEffect } from "react";
 import { Button, Modal } from "antd";
 import fetchJsonp from "fetch-jsonp";
+import { PlusOutlined } from "@ant-design/icons";
 
 interface OAuthComponentProps {
   clientId: string;
@@ -32,39 +32,41 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
     setOauthInProgress(true);
     const url = `https://openapi.alipan.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=user:base,file:all:read,file:all:write&relogin=true&state=${oauthCreateToken}`;
     const w = 680;
-    const h = 680;
+    const h = 760;
     const left = window.screen.width / 2 - w / 2;
     const top = window.screen.height / 2 - h / 2;
     const wnd = window.open(
       url,
       "_blank",
-      `height=${h},width=${w},menubar=0,status=0,titlebar=0,toolbar=0,left=${left},top=${top}`
+      `height=${h},width=${w},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=auto,resizeable=no,location=no,status=no`
     );
 
     let countDown = 300;
     const recheck = () => {
-        countDown--;
-        if (countDown > 0 && oauthCreateToken) {
-            fetchJsonp(`https://api.duplicati.net/api/open/aliyundrive/token?state=${oauthCreateToken}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data) {
-                        // 处理获取到的数据
-                        setToken(data);
-                        setOauthInProgress(false);
-                        wnd?.close();
-                        setIsModalVisible(false);
-                    } else {
-                        setTimeout(recheck, 1000);
-                    }
-                })
-                .catch(() => {
-                    setTimeout(recheck, 1000);
-                });
-        } else {
-            setOauthInProgress(false);
-            wnd?.close();
-        }
+      countDown--;
+      if (countDown > 0 && oauthCreateToken) {
+        fetchJsonp(
+          `https://api.duplicati.net/api/open/aliyundrive/token?state=${oauthCreateToken}`
+        )
+          .then((response) => response.json())
+          .then((data) => {
+            if (data) {
+              // 处理获取到的数据
+              setToken(data);
+              setOauthInProgress(false);
+              wnd?.close();
+              setIsModalVisible(false);
+            } else {
+              setTimeout(recheck, 1000);
+            }
+          })
+          .catch(() => {
+            setTimeout(recheck, 1000);
+          });
+      } else {
+        setOauthInProgress(false);
+        wnd?.close();
+      }
     };
 
     setTimeout(recheck, 6000);
@@ -81,21 +83,24 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
 
   return (
     <div>
-      <Button type="primary" onClick={showModal}>
-        Start OAuth
-      </Button>
-      { token || '-' }
+      <Button
+        type="link"
+        size="small"
+        icon={<PlusOutlined />}
+        onClick={showModal}
+      ></Button>
+      {/* {token || "-"} */}
       <Modal
-        title="OAuth Authentication"
+        title="阿里云盘登录授权"
         visible={isModalVisible}
         onCancel={hideModal}
         footer={null}
       >
         {oauthInProgress ? (
-          <p>OAuth in progress...</p>
+          <p>授权中</p>
         ) : (
           <Button type="primary" onClick={startOAuth}>
-            Authenticate
+            扫码登录
           </Button>
         )}
       </Modal>

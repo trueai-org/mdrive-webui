@@ -53,6 +53,8 @@ yarn add @ant-design/pro-components
 
 # 添加 vite proxy
 
+# 添加时间格式化
+yarn add date-fns
 
 # 待定
 # 1. 添加 eslint

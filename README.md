@@ -1,33 +1,38 @@
-# React + TypeScript + Vite
+# MDrive Web UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+这是 MDrive 的 Web UI 项目。
 
-Currently, two official plugins are available:
+## 开发
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+如果你需要本地开发，本项目使用 `React + Vite + Antd + TypeScript + TailwindCSS` 构建前端项目，启动到连接本地运行的服务器。
+默认使用本地代理：http://localhost:8080，如需修改可修改 `vite.config.ts`。
 
-## Expanding the ESLint configuration
+> 本地开发
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
++ 1.首先启动开发服务器，`MDriveSync.Client.API` 默认端口 `8080`，可通过 `appsettings.json` 修改默认端口。
++ 2.然后启动本项目。
 
-- Configure the top-level `parserOptions` property like this:
+```bash
+# 安装依赖并启动
+yarn
+yarn dev
+# 构建
+yarn build
+# 预览
+yarn preview
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+# 或
+npm i
+npm run dev
+# 构建
+npm run build
+# 预览
+npm run preview
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+> 发布到服务器
+
+构建完成后，将本项目构建的内容 `dist` 复制到 `MDriveSync.Client.API` 项目的 `wwwroot` 目录下即可。
 
 ## 框架
 
@@ -52,6 +57,7 @@ npx tailwindcss init -p
 yarn add @ant-design/pro-components
 
 # 添加 vite proxy
+用于本地开发的代理，http://localhost:8080
 
 # 添加时间格式化
 yarn add date-fns
@@ -68,7 +74,7 @@ yarn add date-fns
 # 10. 添加 react-query
 # 11. 添加 react-query-devtools
 # 12. 添加 分包 js
-# 13. 添加 pinia / reciol
+# 13. 添加 pinia / recoil
 # 14. 添加 react-i18next
 # 15. 添加 electron
 # 16. 添加 electron-builder

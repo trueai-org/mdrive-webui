@@ -28,6 +28,7 @@ import { getDownloadFile, getDriveFiles, getDrives, getFile } from "./api";
 import { IDrive, IDriveFile, IDriveJob } from "./api/api";
 import { formatFileSize, getJobStateTag } from "./utils";
 import OAuthComponent from "./components/OAuthComponent";
+import JobEditModal from "./components/JobEditModal";
 
 function App() {
   const [pathname, setPathname] = useState("/list/sub-page/sub-sub-page1");
@@ -295,6 +296,30 @@ function App() {
     }
   };
 
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [currentJob, setCurrentJob] = useState<IDriveJob | null>(null);
+
+  const handleEdit = (job: IDriveJob) => {
+    setCurrentJob(job);
+    setIsModalVisible(true);
+  };
+
+  const handleSave = (updatedJob: IDriveJob) => {
+    console.log("Saved Job:", updatedJob);
+    // 在这里更新您的数据或状态
+    setIsModalVisible(false);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
+
+  const handleDelete = (jobId: string) => {
+    console.log("Delete Job with ID:", jobId);
+    // 在这里处理删除逻辑
+    setIsModalVisible(false);
+  };
+
   return (
     <ProLayout
       title="MDrive"
@@ -432,14 +457,12 @@ function App() {
                       },
                     },
                     actions: {
-                      render: () => {
+                      render: (_, r) => {
                         return (
                           <Dropdown.Button
                             size="small"
                             menu={{ items, onClick: onMenuClick }}
-                            onClick={(e) => {
-                              console.log("点击了", e);
-                            }}
+                            onClick={() => handleEdit(r.job)}
                           >
                             <EditOutlined />
                           </Dropdown.Button>
@@ -502,6 +525,14 @@ function App() {
           </div>
         </ProCard>
       </ProCard>
+
+      <JobEditModal
+        visible={isModalVisible}
+        onOk={handleSave}
+        onCancel={handleCancel}
+        onDelete={handleDelete}
+        jobConfig={currentJob!}
+      />
     </ProLayout>
 
     //   <PageContainer

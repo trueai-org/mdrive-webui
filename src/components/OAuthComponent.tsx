@@ -1,11 +1,14 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { Button, Modal } from "antd";
+import { Button, Input, Modal, Spin } from "antd";
 import fetchJsonp from "fetch-jsonp";
-import { PlusOutlined } from "@ant-design/icons";
+import { PlusOutlined, EditOutlined } from "@ant-design/icons";
+import { IDrive } from "@/api/api";
 
 interface OAuthComponentProps {
   clientId: string;
   redirectUri: string;
+  isAdd: boolean;
+  drive?: IDrive;
   onClose: () => void;
 }
 
@@ -13,11 +16,17 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
   clientId,
   redirectUri,
   onClose,
+  isAdd,
+  drive: driveInfo,
 }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [oauthInProgress, setOauthInProgress] = useState(false);
   const [oauthCreateToken, setOauthCreateToken] = useState("");
-  const [token, setToken] = useState("");
+  const [token, setToken] = useState(() => {
+    return driveInfo?.accessToken || "";
+  });
+
+  // const [drive, setDrive] = useState(driveInfo);
 
   useEffect(() => {
     if (isModalVisible) {
@@ -55,7 +64,9 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
               setToken(data);
               setOauthInProgress(false);
               wnd?.close();
-              setIsModalVisible(false);
+
+              // 不关闭弹窗
+              // setIsModalVisible(false);
             } else {
               setTimeout(recheck, 1000);
             }
@@ -83,26 +94,59 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
 
   return (
     <div>
-      <Button
-        type="link"
-        size="small"
-        icon={<PlusOutlined />}
-        onClick={showModal}
-      ></Button>
-      {/* {token || "-"} */}
+      {isAdd ? (
+        <Button
+          type="link"
+          size="small"
+          icon={<PlusOutlined />}
+          onClick={showModal}
+        ></Button>
+      ) : (
+        <Button
+          type="link"
+          size="small"
+          icon={<EditOutlined />}
+          onClick={showModal}
+        ></Button>
+      )}
+
       <Modal
-        title="阿里云盘登录授权"
-        visible={isModalVisible}
+        title="阿里云盘授权"
+        open={isModalVisible}
         onCancel={hideModal}
-        footer={null}
+        footer={
+          <div>
+            <Button onClick={hideModal} type="primary">
+              保存
+            </Button>
+            <Button onClick={hideModal} type="default">
+              取消
+            </Button>
+          </div>
+        }
       >
-        {oauthInProgress ? (
-          <p>授权中 {token || '-'}</p>
-        ) : (
-          <Button type="primary" onClick={startOAuth}>
-            扫码登录
-          </Button>
-        )}
+        <Spin spinning={oauthInProgress} tip="授权中">
+          <div className="pb-6">
+            <div className="flex flex-row">
+              <span className="flex flex-col flex-none w-20">
+                <span>授权令牌：</span>
+              </span>
+              <div className="flex flex-col flex-1">
+                <Input.TextArea
+                  placeholder="授权令牌"
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                ></Input.TextArea>
+                <span
+                  className="text-blue-500 cursor-pointer hover:text-blue-800"
+                  onClick={startOAuth}
+                >
+                  点击扫码授权
+                </span>
+              </div>
+            </div>
+          </div>
+        </Spin>
       </Modal>
     </div>
   );

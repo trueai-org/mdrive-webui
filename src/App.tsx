@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import React from "react";
-import { Button, Dropdown, Input, MenuProps, Table, Tag } from "antd";
+import { Button, Dropdown, Input, MenuProps, Table, Tag, Tooltip } from "antd";
 import { ProCard, ProLayout, ProList } from "@ant-design/pro-components";
 import {
   CloudUploadOutlined,
@@ -16,6 +16,7 @@ import {
   FileImageTwoTone,
   FileOutlined,
   DownloadOutlined,
+  PlusOutlined,
 } from "@ant-design/icons";
 import { format } from "date-fns";
 import { ColumnsType } from "antd/es/table";
@@ -27,29 +28,6 @@ import { getDownloadFile, getDriveFiles, getDrives, getFile } from "./api";
 import { IDrive, IDriveFile, IDriveJob } from "./api/api";
 import { formatFileSize, getJobStateTag } from "./utils";
 import OAuthComponent from "./components/OAuthComponent";
-
-const onMenuClick: MenuProps["onClick"] = (e) => {
-  console.log("click", e);
-};
-
-const items = [
-  {
-    key: "1",
-    label: "执行",
-  },
-  {
-    key: "2",
-    label: "刷新",
-  },
-  {
-    key: "3",
-    label: "暂停",
-  },
-  {
-    key: "4",
-    label: "删除",
-  },
-];
 
 function App() {
   const [pathname, setPathname] = useState("/list/sub-page/sub-sub-page1");
@@ -199,6 +177,29 @@ function App() {
   const tblRef: Parameters<typeof Table>[0]["ref"] = React.useRef(null);
   const data = React.useMemo(() => files, [files]);
 
+  const onMenuClick: MenuProps["onClick"] = (e) => {
+    console.log("click", e);
+  };
+
+  const items = [
+    {
+      key: "1",
+      label: "执行",
+    },
+    {
+      key: "2",
+      label: "刷新",
+    },
+    {
+      key: "3",
+      label: "暂停",
+    },
+    {
+      key: "4",
+      label: "删除",
+    },
+  ];
+
   const currentInfo = React.useMemo(() => {
     return `包含 ${files?.filter((x) => x.isFile).length || 0} 个文件，${
       files?.filter((x) => x.isFolder).length || 0
@@ -326,6 +327,7 @@ function App() {
               clientId="12561ebaf6504bea8a611932684c86f6"
               redirectUri="https://api.duplicati.net/api/open/aliyundrive"
               onClose={hide}
+              isAdd
             />
           }
         >
@@ -366,12 +368,20 @@ function App() {
                   }
                   toolBarRender={() => {
                     return [
-                      <Button
-                        key="3"
-                        type="link"
-                        size="small"
-                        icon={<EditOutlined />}
-                      ></Button>,
+                      <Tooltip title="添加作业">
+                        <Button
+                          type="link"
+                          size="small"
+                          icon={<PlusOutlined />}
+                        ></Button>
+                      </Tooltip>,
+                      <OAuthComponent
+                        clientId="12561ebaf6504bea8a611932684c86f6"
+                        redirectUri="https://api.duplicati.net/api/open/aliyundrive"
+                        onClose={hide}
+                        isAdd={false}
+                        drive={c}
+                      />,
                     ];
                   }}
                   // expandable={{
@@ -427,6 +437,9 @@ function App() {
                           <Dropdown.Button
                             size="small"
                             menu={{ items, onClick: onMenuClick }}
+                            onClick={(e) => {
+                              console.log("点击了", e);
+                            }}
                           >
                             <EditOutlined />
                           </Dropdown.Button>

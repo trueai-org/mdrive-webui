@@ -156,7 +156,7 @@ function App() {
     {
       title: "操作",
       key: "action",
-      width: 120,
+      width: 80,
       align: "center",
       render: (_, r) => {
         if (r.isFile) {

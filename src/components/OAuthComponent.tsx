@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { Button, Input, Modal, Spin } from "antd";
 import fetchJsonp from "fetch-jsonp";
 import { PlusOutlined, EditOutlined } from "@ant-design/icons";
-import { IDrive } from "@/api/api";
+import { IDrive } from "@/api/model";
 
 interface OAuthComponentProps {
   clientId: string;
@@ -114,6 +114,7 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
         title="阿里云盘授权"
         open={isModalVisible}
         onCancel={hideModal}
+        width={760}
         footer={
           <div>
             <Button onClick={hideModal} type="primary">
@@ -126,7 +127,7 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
         }
       >
         <Spin spinning={oauthInProgress} tip="授权中">
-          <div className="pb-6">
+          <div className="pb-6 mt-3">
             <div className="flex flex-row">
               <span className="flex flex-col flex-none w-20">
                 <span>授权令牌：</span>
@@ -136,6 +137,7 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
                   placeholder="授权令牌"
                   value={token}
                   onChange={(e) => setToken(e.target.value)}
+                  rows={5}
                 ></Input.TextArea>
                 <span
                   className="text-blue-500 cursor-pointer hover:text-blue-800"

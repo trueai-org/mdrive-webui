@@ -62,6 +62,9 @@ yarn add @ant-design/pro-components
 # 添加时间格式化
 yarn add date-fns
 
+# 配置别名
+yarn add @types/node -D
+
 # 待定
 # 1. 添加 eslint
 # 2. 添加 prettier

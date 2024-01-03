@@ -1,5 +1,5 @@
+import { JobState } from "@/api/model";
 import { Tag } from "antd";
-import { JobState } from "../api";
 
 export const getJobStateTag = (state: JobState) => {
   let color = "default";

@@ -53,7 +53,6 @@ export interface IDriveMetadata {
 }
 
 export interface IDriveFile {
-
   drive_id: string;
   file_id: string;
   parent_file_id: string;
@@ -82,4 +81,34 @@ export interface IDriveDownloadFile {
   url: string;
   expiration: string;
   method: string;
+}
+
+export interface IResult<T = any> {
+  code: number;
+  message?: string;
+  data?: T;
+  success?: boolean;
+  timestamp?: string;
+}
+
+/**
+ * 作业状态
+ */
+export enum JobState {
+  None = 0,
+  Initializing = 1,
+  Idle = 5,
+  Starting = 6,
+  Scanning = 7,
+  BackingUp = 8,
+  Restoring = 9,
+  Verifying = 10,
+  Queued = 11,
+  Completed = 15,
+  Paused = 16,
+  Error = 17,
+  Cancelling = 18,
+  Cancelled = 19,
+  Disabled = 100,
+  Deleted = 101,
 }

@@ -1,5 +1,11 @@
 import axios from "axios";
-import { IDrive, IDriveDownloadFile, IDriveFile } from "./api";
+import {
+  IDrive,
+  IDriveDownloadFile,
+  IDriveFile,
+  IDriveJob,
+  IResult,
+} from "./model";
 
 // 创建 axios 实例
 const api = axios.create({});
@@ -40,6 +46,26 @@ export const getDownloadFile = async (jobId: string, fileId: string) => {
 };
 
 /**
+ * 作业更新
+ * @param data
+ * @returns
+ */
+export const updateJob = async (data: IDriveJob) => {
+  const response = await api.put<IResult>(`/api/drive/job`, data);
+  return response.data;
+};
+
+/**
+ * 作业更新状态
+ * @param data
+ * @returns
+ */
+export const updateJobState = async (jobId: string, state: any) => {
+  const response = await api.put<IResult>(`/api/drive/job/${jobId}/${state}`);
+  return response.data;
+};
+
+/**
  * 文件详情
  * @param jobId
  * @param fileId
@@ -51,24 +77,3 @@ export const getFile = async (jobId: string, fileId: string) => {
   );
   return response.data;
 };
-
-/**
- * 作业状态
- */
-export enum JobState {
-  None = 0,
-  Initializing = 1,
-  Idle = 5,
-  Starting = 6,
-  Scanning = 7,
-  BackingUp = 8,
-  Restoring = 9,
-  Verifying = 10,
-  Queued = 11,
-  Completed = 15,
-  Paused = 16,
-  Error = 17,
-  Cancelling = 18,
-  Cancelled = 19,
-  Disabled = 100,
-}

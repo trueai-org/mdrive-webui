@@ -8,14 +8,17 @@ import {
   InputNumber,
   Button,
   Steps,
+  message,
 } from "antd";
-import { IDriveJob } from "@/api/api";
+import { IDriveJob } from "@/api/model";
+import { updateJob } from "@/api/index";
+
+const { Step } = Steps;
 
 interface JobEditModalProps {
   visible: boolean;
   onOk: (job: IDriveJob) => void;
   onCancel: () => void;
-  onDelete: (id: string) => void;
   jobConfig: IDriveJob;
 }
 
@@ -23,35 +26,72 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
   visible,
   onOk,
   onCancel,
-  onDelete,
   jobConfig,
 }) => {
   const [form] = Form.useForm<IDriveJob>();
+  const [currentStep, setCurrentStep] = useState(0);
+  const [allStepsData, setAllStepsData] = useState<IDriveJob>();
+  const [msg, contextHolder] = message.useMessage();
+  const [saveing, setSaveing] = useState(false);
 
   useEffect(() => {
+    setAllStepsData(jobConfig);
     form.setFieldsValue(jobConfig);
   }, [jobConfig, form]);
 
-  const handleSubmit = () => {
+  const updateStepData = () => {
     form.validateFields().then((values) => {
-      onOk(values);
+      setAllStepsData({ ...allStepsData, ...values });
     });
   };
 
-  const handleDelete = () => {
-    onDelete(jobConfig.id);
+  const next = () => {
+    form
+      .validateFields()
+      .then((values) => {
+        setAllStepsData({ ...allStepsData, ...values });
+        setCurrentStep(currentStep + 1);
+      })
+      .catch((errorInfo) => {
+        msg.error(errorInfo?.errorFields[0].errors[0]);
+      });
   };
 
-  const [currentStep, setCurrentStep] = useState(0);
+  const prev = () => {
+    form
+      .validateFields()
+      .then((values) => {
+        setAllStepsData({ ...allStepsData, ...values });
+        setCurrentStep(currentStep - 1);
+      })
+      .catch((errorInfo) => {
+        msg.error(errorInfo?.errorFields[0].errors[0]);
+      });
+  };
 
-  useEffect(() => {
-    form.setFieldsValue(jobConfig);
-  }, [jobConfig, form]);
-
-  const next = () => setCurrentStep(currentStep + 1);
-  const prev = () => setCurrentStep(currentStep - 1);
-
-  const { Step } = Steps;
+  const handleSubmit = () => {
+    setSaveing(true);
+    form
+      .validateFields()
+      .then((values) => {
+        const value: IDriveJob = { ...allStepsData, ...values };
+        setAllStepsData(value);
+        updateJob(value).then((res) => {
+          if (res?.success) {
+            onOk && onOk(value);
+            msg.success("操作成功");
+          } else {
+            msg.error(res?.message || "操作失败");
+          }
+        });
+      })
+      .catch((errorInfo) => {
+        msg.error(errorInfo?.errorFields[0].errors[0]);
+      })
+      .finally(() => {
+        setSaveing(false);
+      });
+  };
 
   return (
     <Modal
@@ -61,11 +101,13 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
       onCancel={onCancel}
       width={760}
       footer={[
-        <Button key="submit" type="primary" onClick={handleSubmit}>
+        <Button
+          loading={saveing}
+          key="submit"
+          type="primary"
+          onClick={handleSubmit}
+        >
           保存
-        </Button>,
-        <Button key="delete" onClick={handleDelete} danger>
-          删除
         </Button>,
         <Button key="cancel" onClick={onCancel}>
           取消
@@ -73,7 +115,15 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
       ]}
       className="w-full"
     >
-      <Steps className="py-3" onChange={setCurrentStep} current={currentStep}>
+      {contextHolder}
+      <Steps
+        className="py-3"
+        onChange={(e) => {
+          updateStepData();
+          setCurrentStep(e);
+        }}
+        current={currentStep}
+      >
         <Step title="基本信息" />
         <Step title="作业配置" />
         <Step title="高级设置" />
@@ -138,10 +188,18 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
             >
               <Input />
             </Form.Item>
-            <Form.Item name="filters" label="过滤文件" tooltip="排除本地不需要过滤的文件/文件夹">
+            <Form.Item
+              name="filters"
+              label="过滤文件"
+              tooltip="排除本地不需要过滤的文件/文件夹"
+            >
               <Select mode="tags" tokenSeparators={[","]} />
             </Form.Item>
-            <Form.Item name="restore" label="还原目录" tooltip="还原文件时的本地文件夹">
+            <Form.Item
+              name="restore"
+              label="还原目录"
+              tooltip="还原文件时的本地文件夹"
+            >
               <Input />
             </Form.Item>
             <Form.Item
@@ -180,7 +238,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
                 </span>
               }
             >
-              <InputNumber defaultValue={1} min={0} max={4} />
+              <InputNumber min={0} max={4} />
             </Form.Item>
             <Form.Item
               name="fileWatcher"

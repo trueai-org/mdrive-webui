@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import React from "react";
-import { Button, Dropdown, Input, MenuProps, Table, Tag, Tooltip } from "antd";
+import { Button, Dropdown, Input, MenuProps, Table, Tag, Tooltip, message } from "antd";
 import { ProCard, ProLayout, ProList } from "@ant-design/pro-components";
 import {
   CloudUploadOutlined,
@@ -24,11 +24,18 @@ import { ColumnsType } from "antd/es/table";
 import defaultProps from "./_defaultProps";
 import "./App.css";
 import { useOAuth } from "./hooks/useOAuth";
-import { getDownloadFile, getDriveFiles, getDrives, getFile } from "./api";
-import { IDrive, IDriveFile, IDriveJob } from "./api/api";
+import {
+  getDownloadFile,
+  getDriveFiles,
+  getDrives,
+  getFile,
+  updateJobState,
+} from "./api";
+import { IDrive, IDriveFile, IDriveJob, JobState } from "./api/model";
 import { formatFileSize, getJobStateTag } from "./utils";
 import OAuthComponent from "./components/OAuthComponent";
 import JobEditModal from "./components/JobEditModal";
+import { MenuInfo } from "rc-menu/lib/interface";
 
 function App() {
   const [pathname, setPathname] = useState("/list/sub-page/sub-sub-page1");
@@ -36,7 +43,8 @@ function App() {
   const { hide } = useOAuth();
 
   // const [expandedRowKeys, setExpandedRowKeys] = useState<readonly Key[]>([]);
-
+  
+  const [msg, contextHolder] = message.useMessage();
   const [loading, setLoading] = useState(false);
   const [tableLoading, setTableLoading] = useState(false);
 
@@ -52,8 +60,6 @@ function App() {
       dataIndex: "name",
       fixed: "left",
       render: (_, r) => {
-        // app - .exe
-
         if (r.category == "image") {
           return (
             <div className="space-x-1 text-base flex items-center cursor-pointer hover:text-blue-500">
@@ -177,41 +183,108 @@ function App() {
 
   const tblRef: Parameters<typeof Table>[0]["ref"] = React.useRef(null);
   const data = React.useMemo(() => files, [files]);
-
-  const onMenuClick: MenuProps["onClick"] = (e) => {
-    console.log("click", e);
+  const onJobMenu = (e: MenuInfo, jobId: string) => {
+    setLoading(true);
+    updateJobState(jobId, e.key)
+      .then(res=>{
+        if (res?.success) {
+          msg.success("操作成功");
+          setTimeout(() => {
+            loadDrives();
+          }, 500);
+        } else {
+          msg.error(res?.message || "操作失败");
+        }
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
-
-  const items = [
+  const menuItems: MenuProps["items"] = [
     {
-      key: "1",
+      key: JobState.BackingUp,
       label: "执行",
     },
     {
-      key: "2",
-      label: "刷新",
-    },
-    {
-      key: "3",
+      key: JobState.Paused,
       label: "暂停",
     },
     {
-      key: "4",
+      key: JobState.Disabled,
       label: "禁用",
     },
     {
-      key: "5",
+      key: JobState.None,
       label: "启用",
     },
     {
-      key: "6",
+      key: JobState.Cancelled,
       label: "取消",
     },
     {
-      key: "7",
+      key: JobState.Deleted,
       label: "删除",
     },
   ];
+  const getMenuItems = (stateValue: JobState) => {
+    switch (stateValue) {
+      case JobState.None:
+        return menuItems.filter((x) => x?.key == JobState.Paused);
+      case JobState.Initializing:
+        return menuItems.filter((x) => x?.key == JobState.Paused);
+      case JobState.Idle:
+        return menuItems.filter(
+          (x) =>
+            x?.key == JobState.BackingUp ||
+            x?.key == JobState.Disabled ||
+            x?.key == JobState.Deleted
+        );
+      case JobState.Starting:
+        return menuItems.filter((x) => x?.key == JobState.Paused);
+      case JobState.Scanning:
+        return menuItems.filter((x) => x?.key == JobState.Paused);
+      case JobState.BackingUp:
+        return menuItems.filter((x) => x?.key == JobState.Paused);
+      case JobState.Restoring:
+        return menuItems.filter((x) => x?.key == JobState.Paused);
+      case JobState.Verifying:
+        return menuItems.filter((x) => x?.key == JobState.Paused);
+      case JobState.Queued:
+        return menuItems.filter((x) => x?.key == JobState.Paused);
+      case JobState.Completed:
+        return menuItems.filter(
+          (x) =>
+            x?.key == JobState.BackingUp ||
+            x?.key == JobState.Disabled ||
+            x?.key == JobState.Deleted
+        );
+      case JobState.Paused:
+        return menuItems.filter((x) => x?.key == JobState.Cancelled);
+      case JobState.Error:
+        return menuItems.filter(
+          (x) =>
+            x?.key == JobState.BackingUp ||
+            x?.key == JobState.Disabled ||
+            x?.key == JobState.Deleted
+        );
+      case JobState.Cancelling:
+        return menuItems.filter((x) => x?.key == JobState.Paused);
+      case JobState.Cancelled:
+        return menuItems.filter(
+          (x) =>
+            x?.key == JobState.BackingUp ||
+            x?.key == JobState.Disabled ||
+            x?.key == JobState.Deleted
+        );
+      case JobState.Disabled:
+        return menuItems.filter(
+          (x) => x?.key == JobState.None || x?.key == JobState.Deleted
+        );
+      default:
+        return menuItems.filter((x) => x?.key == JobState.Paused);
+    }
+    return [];
+  };
 
   const currentInfo = React.useMemo(() => {
     return `包含 ${files?.filter((x) => x.isFile).length || 0} 个文件，${
@@ -232,14 +305,16 @@ function App() {
   }, [job, currentFile]);
 
   useEffect(() => {
+    loadDrives();
+  }, []);
+
+  const loadDrives = () => {
     setLoading(true);
     getDrives().then((c) => {
-      // c.forEach((x) => (x.expandedRowKeys = []));
-      console.log("c", c);
       setDrives(c || []);
       setLoading(false);
     });
-  }, []);
+  };
 
   /**
    * 加载文件
@@ -316,19 +391,16 @@ function App() {
     setIsModalVisible(true);
   };
 
-  const handleSave = (updatedJob: IDriveJob) => {
-    console.log("Saved Job:", updatedJob);
-    // 在这里更新您的数据或状态
-    setIsModalVisible(false);
+  const onJobSave = (updatedJob: IDriveJob) => {
+    if (updatedJob) {
+      setIsModalVisible(false);
+      setTimeout(() => {
+        loadDrives();
+      }, 500);
+    }
   };
 
   const handleCancel = () => {
-    setIsModalVisible(false);
-  };
-
-  const handleDelete = (jobId: string) => {
-    console.log("Delete Job with ID:", jobId);
-    // 在这里处理删除逻辑
     setIsModalVisible(false);
   };
 
@@ -353,7 +425,7 @@ function App() {
       layout="top"
       loading={loading}
     >
-      <ProCard split="vertical">
+      <ProCard split="vertical" style={{ minHeight: 520 }}>
         <ProCard
           bodyStyle={{ margin: 0, padding: 0 }}
           headerBordered
@@ -473,7 +545,12 @@ function App() {
                         return (
                           <Dropdown.Button
                             size="small"
-                            menu={{ items, onClick: onMenuClick }}
+                            menu={{
+                              items: getMenuItems(r.job.state),
+                              onClick: (e) => {
+                                onJobMenu(e, r.job.id);
+                              },
+                            }}
                             onClick={() => handleEdit(r.job)}
                           >
                             <EditOutlined />
@@ -540,11 +617,11 @@ function App() {
 
       <JobEditModal
         visible={isModalVisible}
-        onOk={handleSave}
+        onOk={onJobSave}
         onCancel={handleCancel}
-        onDelete={handleDelete}
         jobConfig={currentJob!}
       />
+      {contextHolder}
     </ProLayout>
 
     //   <PageContainer

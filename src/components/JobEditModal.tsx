@@ -59,7 +59,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
       open={visible}
       onOk={handleSubmit}
       onCancel={onCancel}
-      width={800}
+      width={760}
       footer={[
         <Button key="submit" type="primary" onClick={handleSubmit}>
           保存
@@ -82,66 +82,85 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
       <Form form={form} labelCol={{ span: 6 }} wrapperCol={{ span: 18 }}>
         {currentStep == 0 && (
           <>
-            <Form.Item required name="id" label="任务 ID">
+            <Form.Item required name="id" label="作业标识">
               <Input disabled />
             </Form.Item>
             <Form.Item
               name="name"
-              label="任务/作业名称"
+              label="作业名称"
               rules={[{ required: true, message: "请输入任务/作业名称" }]}
             >
               <Input />
             </Form.Item>
-            <Form.Item name="description" label="作业/任务描述">
+            <Form.Item name="description" label="作业描述">
               <Input />
-            </Form.Item>
-            {/* <Form.Item name="state" label="作业状态">
-         
-            </Form.Item> */}
-            <Form.Item name="mode" label="作业级别">
-              <Select>
-                <Select.Option value="Mirror">镜像</Select.Option>
-                <Select.Option value="Incremental">增量</Select.Option>
-                {/* ...其他模式... */}
-              </Select>
             </Form.Item>
             <Form.Item name="schedules" label="作业计划">
               <Select mode="tags" tokenSeparators={[","]} />
+            </Form.Item>
+            <Form.Item
+              name="mode"
+              label="同步模式"
+              help="镜像：以本地为主，如果远程和本地不一致则删除远程文件；备份：以本地为主，将本地备份到远程，不删除远程文件；双向：双向同步，同时保留，冲突的文件重新命名。"
+            >
+              <Select>
+                <Select.Option value={0}>镜像</Select.Option>
+                <Select.Option value={1}>备份</Select.Option>
+                <Select.Option value={2}>双向</Select.Option>
+              </Select>
             </Form.Item>
           </>
         )}
         {currentStep == 1 && (
           <>
-            <Form.Item name="filters" label="过滤文件/文件夹">
-              <Select mode="tags" tokenSeparators={[","]} />
-            </Form.Item>
-            <Form.Item name="sources" label="源目录">
-              <Select mode="tags" tokenSeparators={[","]} />
-            </Form.Item>
-            <Form.Item name="target" label="目标存储目录">
-              <Input />
-            </Form.Item>
-            <Form.Item name="restore" label="还原目录">
-              <Input />
-            </Form.Item>
             <Form.Item
-              name="rapidUpload"
-              label="是否启用秒传功能"
-              valuePropName="checked"
+              name="sources"
+              label="本地目录"
+              tooltip="源路劲、本地路径，请选择本地文件夹"
             >
-              <Checkbox />
+              <Select mode="tags" tokenSeparators={[","]} />
             </Form.Item>
-            <Form.Item name="defaultDrive" label="默认备份的云盘">
+
+            <Form.Item
+              name="defaultDrive"
+              label="目标位置"
+              tooltip="阿里云盘的存储位置，个人私有文件建议存储到备份盘"
+            >
               <Select>
                 <Select.Option value="resource">资源库</Select.Option>
                 <Select.Option value="backup">备份盘</Select.Option>
               </Select>
             </Form.Item>
+            <Form.Item
+              name="target"
+              label="目标目录"
+              tooltip="云盘存储路径，远程备份/同步存储的路径"
+            >
+              <Input />
+            </Form.Item>
+            <Form.Item name="filters" label="过滤文件" tooltip="排除本地不需要过滤的文件/文件夹">
+              <Select mode="tags" tokenSeparators={[","]} />
+            </Form.Item>
+            <Form.Item name="restore" label="还原目录" tooltip="还原文件时的本地文件夹">
+              <Input />
+            </Form.Item>
+            <Form.Item
+              name="rapidUpload"
+              label="启用秒传"
+              valuePropName="checked"
+              tooltip="是否启用阿里云盘秒传功能"
+            >
+              <Checkbox />
+            </Form.Item>
           </>
         )}
         {currentStep == 2 && (
           <>
-            <Form.Item name="checkAlgorithm" label="文件对比检查算法">
+            <Form.Item
+              name="checkAlgorithm"
+              tooltip="文件是否变更检查算法"
+              label="文件对比检查算法"
+            >
               <Select>
                 <Select.Option value="md5">MD5</Select.Option>
                 <Select.Option value="sha1">SHA1</Select.Option>
@@ -153,7 +172,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
               label="文件对比检查级别"
               tooltip="文件变更时，文件是否变动检查算法级别，默认：1"
               help={
-                <span className="text-gray-400">
+                <span>
                   0：比较文件大小和时间，1：采样计算文件
                   hash（推荐），2：比较整个文件的 hash
                   <br />
@@ -208,7 +227,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
         )}
       </Form>
 
-      <div className="mt-3 items-center justify-center w-full flex">
+      <div className="pt-3 items-center justify-center w-full flex">
         {currentStep > 0 && (
           <Button style={{ margin: "0 8px" }} onClick={() => prev()}>
             上一步

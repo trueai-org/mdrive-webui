@@ -197,6 +197,18 @@ function App() {
     },
     {
       key: "4",
+      label: "禁用",
+    },
+    {
+      key: "5",
+      label: "启用",
+    },
+    {
+      key: "6",
+      label: "取消",
+    },
+    {
+      key: "7",
       label: "删除",
     },
   ];

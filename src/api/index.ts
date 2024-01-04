@@ -20,6 +20,16 @@ export const getDrives = async () => {
 };
 
 /**
+ * 常用表达式
+ * @returns 
+ */
+export const getCronTags = async () => {
+  const response = await api.get<string[]>("/api/drive/crons");
+  return response.data;
+};
+
+
+/**
  * 获取云盘文件
  * @param jobId
  * @param parentId

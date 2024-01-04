@@ -30,15 +30,15 @@ import {
 import { format } from "date-fns";
 import { ColumnsType } from "antd/es/table";
 
-import defaultProps from "./_defaultProps";
-import "./App.css";
-import { useOAuth } from "./hooks/useOAuth";
 import {
+  addDrive,
   addJob,
+  deleteDrive,
   getDownloadFile,
   getDriveFiles,
   getDrives,
   getFile,
+  updateDrive,
   updateJob,
   updateJobState,
 } from "./api";
@@ -47,12 +47,12 @@ import { formatFileSize, getJobStateTag } from "./utils";
 import OAuthComponent from "./components/OAuthComponent";
 import JobEditModal from "./components/JobEditModal";
 import { MenuInfo } from "rc-menu/lib/interface";
+import defaultProps from "./_defaultProps";
+
+import "./App.css";
 
 function App() {
   const [pathname, setPathname] = useState("/list/sub-page/sub-sub-page1");
-
-  const { hide } = useOAuth();
-
   // const [expandedRowKeys, setExpandedRowKeys] = useState<readonly Key[]>([]);
 
   const [msg, contextHolder] = message.useMessage();
@@ -327,6 +327,12 @@ function App() {
     });
   };
 
+  const delayLoadDrives = () => {
+    setTimeout(() => {
+      loadDrives();
+    }, 500);
+  };
+
   /**
    * 加载文件
    * @param jobId
@@ -483,6 +489,42 @@ function App() {
     setVisibleEditJob(false);
   };
 
+  /**
+   * 删除云盘
+   */
+  const onDriveDelete = async (driveId: string) => {
+    const res = await deleteDrive(driveId);
+    if (res?.success) {
+      msg.success("操作成功");
+      delayLoadDrives();
+    } else {
+      msg.error(res?.message || "操作失败");
+    }
+  };
+
+  /**
+   * 保存云盘
+   */
+  const onDriveSave = async (token: string, driveId?: string) => {
+    if (driveId) {
+      const res = await updateDrive(driveId, token);
+      if (res?.success) {
+        msg.success("保存成功");
+        delayLoadDrives();
+      } else {
+        msg.error(res?.message || "操作失败");
+      }
+    } else {
+      const res = await addDrive(token);
+      if (res?.success) {
+        msg.success("保存成功");
+        delayLoadDrives();
+      } else {
+        msg.error(res?.message || "操作失败");
+      }
+    }
+  };
+
   return (
     <ProLayout
       title="MDrive"
@@ -510,14 +552,7 @@ function App() {
           headerBordered
           title={<div className="font-bold">存储和作业</div>}
           colSpan={"432px"}
-          extra={
-            <OAuthComponent
-              clientId="12561ebaf6504bea8a611932684c86f6"
-              redirectUri="https://api.duplicati.net/api/open/aliyundrive"
-              onClose={hide}
-              isAdd
-            />
-          }
+          extra={<OAuthComponent onOk={(tk) => onDriveSave(tk)} isAdd />}
         >
           {drives &&
             drives?.map((c, i) => {
@@ -565,11 +600,9 @@ function App() {
                         ></Button>
                       </Tooltip>,
                       <OAuthComponent
-                        clientId="12561ebaf6504bea8a611932684c86f6"
-                        redirectUri="https://api.duplicati.net/api/open/aliyundrive"
-                        onClose={hide}
-                        isAdd={false}
                         drive={c}
+                        onDelete={() => onDriveDelete(c.id)}
+                        onOk={(tk) => onDriveSave(tk, c.id)}
                       />,
                     ];
                   }}

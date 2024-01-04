@@ -11,6 +11,7 @@ import {
   message,
 } from "antd";
 import { IDriveJob } from "@/api/model";
+import { getCronTags } from "@/api";
 
 const { Step } = Steps;
 
@@ -32,6 +33,13 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
   const [allStepsData, setAllStepsData] = useState<IDriveJob>();
   const [msg, contextHolder] = message.useMessage();
   const [saveing, setSaveing] = useState(false);
+  const [cronTags, setCronTags] = useState<string[]>([]);
+
+  useEffect(() => {
+    getCronTags().then((res) => {
+      setCronTags(res);
+    });
+  }, []);
 
   useEffect(() => {
     if (form && visible) {
@@ -139,8 +147,29 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
             <Form.Item name="description" label="作业描述">
               <Input />
             </Form.Item>
-            <Form.Item name="schedules" label="作业计划">
-              <Select mode="tags" tokenSeparators={[","]} />
+            <Form.Item
+              name="schedules"
+              label="作业计划"
+              help={
+                <span>
+                  更多示例：
+                  <a
+                    href="https://www.bejson.com/othertools/cron/"
+                    target="_blank"
+                  >
+                    Cron 表达式
+                  </a>
+                  ，支持自定义作业时间，示例：0 15 10 * * ?。
+                </span>
+              }
+            >
+              <Select
+                options={cronTags?.map((x) => {
+                  return { value: x };
+                })}
+                mode="tags"
+                tokenSeparators={[","]}
+              />
             </Form.Item>
             <Form.Item
               name="mode"
@@ -158,14 +187,17 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
         {currentStep == 1 && (
           <>
             <Form.Item
+              required
               name="sources"
               label="本地目录"
               tooltip="源路劲、本地路径，请选择本地文件夹"
+              help="请选择或输入本地文件夹，支持多选，例如：E:\test, E:\kopia"
             >
               <Select mode="tags" tokenSeparators={[","]} />
             </Form.Item>
 
             <Form.Item
+              required
               name="defaultDrive"
               label="目标位置"
               tooltip="阿里云盘的存储位置，个人私有文件建议存储到备份盘"
@@ -176,9 +208,11 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
               </Select>
             </Form.Item>
             <Form.Item
+              required
               name="target"
               label="目标目录"
               tooltip="云盘存储路径，远程备份/同步存储的路径"
+              help="路径格式：/文件夹/文件夹/文件夹，示例：backup/mdrive"
             >
               <Input />
             </Form.Item>
@@ -186,6 +220,14 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
               name="filters"
               label="过滤文件"
               tooltip="排除本地不需要过滤的文件/文件夹"
+              help={
+                <>
+                  <div>支持正则表达式，多个文件/文件夹用英文逗号分隔，过滤的文件/文件夹不会同步</div>
+                  <div>
+                    示例：/Recovery/*, *.log, *.tmp, **/@Recycle/*, **/logs/*，更多示例请参考官网。
+                  </div>
+                </>
+              }
             >
               <Select mode="tags" tokenSeparators={[","]} />
             </Form.Item>

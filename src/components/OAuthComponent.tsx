@@ -3,30 +3,33 @@ import { Button, Input, Modal, Popconfirm, Spin, message } from "antd";
 import fetchJsonp from "fetch-jsonp";
 import { PlusOutlined, EditOutlined } from "@ant-design/icons";
 import { IDrive } from "@/api/model";
-import { addDrive } from "@/api";
 
 interface OAuthComponentProps {
-  clientId: string;
-  redirectUri: string;
-  isAdd: boolean;
+  isAdd?: boolean;
+  clientId?: string;
+  redirectUri?: string;
   drive?: IDrive;
   onClose?: () => void;
-  onDelete?: () => void;
+  onDelete?: () => Promise<void>;
+  onOk?: (token: string) => Promise<void>;
 }
 
 const OAuthComponent: React.FC<OAuthComponentProps> = ({
-  clientId,
-  redirectUri,
+  clientId = "12561ebaf6504bea8a611932684c86f6",
+  redirectUri = "https://api.duplicati.net/api/open/aliyundrive",
   onClose,
   isAdd,
   drive: driveInfo,
+  onDelete,
+  onOk,
 }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [oauthInProgress, setOauthInProgress] = useState(false);
   const [oauthCreateToken, setOauthCreateToken] = useState("");
   const [token, setToken] = useState(() => {
-    return driveInfo?.accessToken || "";
+    return driveInfo?.refreshToken || "";
   });
+
   const [saveing, setSaveing] = useState(false);
   const [msg, contextHolder] = message.useMessage();
   // const [drive, setDrive] = useState(driveInfo);
@@ -96,30 +99,16 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
   }, [onClose]);
 
   // 保存
-  const onSave = () => {
+  const onSave = async () => {
     if (!token) {
       msg.error("请授权");
       return;
     }
 
-    // 新增
     setSaveing(true);
-    addDrive(token)
-      .then((res) => {
-        if (res?.success) {
-          msg.success("操作成功");
-          hideModal();
-        } else {
-          msg.error(res?.message || "操作失败");
-        }
-      })
-      .finally(() => {
-        setSaveing(false);
-      });
-  };
-
-  const onDeleteDrive = (e: any) => {
-    message.success("Click on Yes", e);
+    onOk && (await onOk(token));
+    setSaveing(false);
+    hideModal();
   };
 
   return (
@@ -177,18 +166,24 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
                 >
                   点击扫码授权
                 </span>
-                <Popconfirm
-                  title="解除授权令牌？"
-                  description="解除授权将会同时删除当前云盘下的所有作业"
-                  onConfirm={onDeleteDrive}
-                  okText="确认"
-                  cancelText="取消"
-                  placement="topLeft"
-                >
-                  <span className="text-red-500 cursor-pointer hover:text-red-700 w-auto flex">
-                    解除授权
-                  </span>
-                </Popconfirm>
+
+                {!isAdd && (
+                  <Popconfirm
+                    title="解除授权令牌？"
+                    description="解除授权将会同时删除当前云盘下的所有作业"
+                    onConfirm={async () => {
+                      onDelete && (await onDelete());
+                      hideModal();
+                    }}
+                    okText="确认"
+                    cancelText="取消"
+                    placement="topLeft"
+                  >
+                    <span className="text-red-500 cursor-pointer hover:text-red-700 w-auto flex">
+                      解除授权
+                    </span>
+                  </Popconfirm>
+                )}
               </div>
             </div>
           </div>

@@ -11,7 +11,6 @@ import {
   message,
 } from "antd";
 import { IDriveJob } from "@/api/model";
-import { updateJob } from "@/api/index";
 
 const { Step } = Steps;
 
@@ -35,9 +34,11 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
   const [saveing, setSaveing] = useState(false);
 
   useEffect(() => {
-    setAllStepsData(jobConfig);
-    form.setFieldsValue(jobConfig);
-  }, [jobConfig, form]);
+    if (form && visible) {
+      setAllStepsData(jobConfig);
+      form.setFieldsValue(jobConfig);
+    }
+  }, [visible, jobConfig, form]);
 
   const updateStepData = () => {
     form.validateFields().then((values) => {
@@ -76,14 +77,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
       .then((values) => {
         const value: IDriveJob = { ...allStepsData, ...values };
         setAllStepsData(value);
-        updateJob(value).then((res) => {
-          if (res?.success) {
-            onOk && onOk(value);
-            msg.success("操作成功");
-          } else {
-            msg.error(res?.message || "操作失败");
-          }
-        });
+        onOk && onOk(value);
       })
       .catch((errorInfo) => {
         msg.error(errorInfo?.errorFields[0].errors[0]);

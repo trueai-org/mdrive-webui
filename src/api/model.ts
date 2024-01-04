@@ -24,7 +24,7 @@ export interface IDriveJob {
   filters: string[];
   sources: string[];
   target: string;
-  restore: string;
+  restore?: string;
   rapidUpload: boolean;
   defaultDrive: string;
   checkAlgorithm: string;
@@ -35,7 +35,7 @@ export interface IDriveJob {
   isRecycleBin: boolean;
   uploadThread: number;
   downloadThread: number;
-  metadata: IJobMetadata;
+  metadata?: IJobMetadata;
 }
 
 export interface IJobMetadata {

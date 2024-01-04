@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import React from "react";
-import { Button, Dropdown, Input, MenuProps, Table, Tag, Tooltip, message } from "antd";
+import {
+  Button,
+  Dropdown,
+  Input,
+  MenuProps,
+  Table,
+  Tag,
+  Tooltip,
+  message,
+} from "antd";
 import { ProCard, ProLayout, ProList } from "@ant-design/pro-components";
 import {
   CloudUploadOutlined,
@@ -25,10 +34,12 @@ import defaultProps from "./_defaultProps";
 import "./App.css";
 import { useOAuth } from "./hooks/useOAuth";
 import {
+  addJob,
   getDownloadFile,
   getDriveFiles,
   getDrives,
   getFile,
+  updateJob,
   updateJobState,
 } from "./api";
 import { IDrive, IDriveFile, IDriveJob, JobState } from "./api/model";
@@ -43,7 +54,7 @@ function App() {
   const { hide } = useOAuth();
 
   // const [expandedRowKeys, setExpandedRowKeys] = useState<readonly Key[]>([]);
-  
+
   const [msg, contextHolder] = message.useMessage();
   const [loading, setLoading] = useState(false);
   const [tableLoading, setTableLoading] = useState(false);
@@ -186,7 +197,7 @@ function App() {
   const onJobMenu = (e: MenuInfo, jobId: string) => {
     setLoading(true);
     updateJobState(jobId, e.key)
-      .then(res=>{
+      .then((res) => {
         if (res?.success) {
           msg.success("操作成功");
           setTimeout(() => {
@@ -383,25 +394,93 @@ function App() {
     }
   };
 
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [currentJob, setCurrentJob] = useState<IDriveJob | null>(null);
+  // 显示编辑
+  const [visibleEditJob, setVisibleEditJob] = useState(false);
+  // 当前编辑的作业
+  const [currentEditJob, setCurrentEditJob] = useState<IDriveJob | null>(null);
+  // 当前编辑的云盘 ID
+  const [currentDriveId, setCurrentDriveId] = useState<string>();
 
-  const handleEdit = (job: IDriveJob) => {
-    setCurrentJob(job);
-    setIsModalVisible(true);
+  /**
+   * 作业编辑
+   * @param job
+   */
+  const onJobEdit = (job: IDriveJob) => {
+    setCurrentEditJob(job);
+    setVisibleEditJob(true);
   };
 
-  const onJobSave = (updatedJob: IDriveJob) => {
-    if (updatedJob) {
-      setIsModalVisible(false);
-      setTimeout(() => {
-        loadDrives();
-      }, 500);
+  /**
+   * 作业添加
+   * @param job
+   */
+  const onJobAdd = (driveId: string) => {
+    setCurrentDriveId(driveId);
+    setCurrentEditJob({
+      id: "",
+      name: "",
+      description: "",
+      state: JobState.None,
+      mode: 0,
+      rapidUpload: true,
+      checkLevel: 1,
+      checkAlgorithm: "sha256",
+      order: 0,
+      isTemporary: false,
+      isRecycleBin: true,
+      uploadThread: 0,
+      downloadThread: 0,
+      schedules: [],
+      filters: [],
+      fileWatcher: true,
+      defaultDrive: "backup",
+      target: "",
+      sources: [],
+    });
+    setVisibleEditJob(true);
+  };
+
+  /**
+   * 作业保存
+   * @param value
+   */
+  const onJobSave = (value: IDriveJob) => {
+    if (value) {
+      if (value.id) {
+        // 编辑
+        updateJob(value).then((res) => {
+          if (res?.success) {
+            msg.success("操作成功");
+            setVisibleEditJob(false);
+            setTimeout(() => {
+              loadDrives();
+            }, 500);
+          } else {
+            msg.error(res?.message || "操作失败");
+          }
+        });
+      } else {
+        // 新增
+        addJob(currentDriveId!, value).then((res) => {
+          if (res?.success) {
+            msg.success("操作成功");
+            setVisibleEditJob(false);
+            setTimeout(() => {
+              loadDrives();
+            }, 500);
+          } else {
+            msg.error(res?.message || "操作失败");
+          }
+        });
+      }
     }
   };
 
-  const handleCancel = () => {
-    setIsModalVisible(false);
+  /**
+   * 作业编辑取消
+   */
+  const onJobSaveCancel = () => {
+    setVisibleEditJob(false);
   };
 
   return (
@@ -482,6 +561,7 @@ function App() {
                           type="link"
                           size="small"
                           icon={<PlusOutlined />}
+                          onClick={()=>onJobAdd(c.id)}
                         ></Button>
                       </Tooltip>,
                       <OAuthComponent
@@ -551,7 +631,7 @@ function App() {
                                 onJobMenu(e, r.job.id);
                               },
                             }}
-                            onClick={() => handleEdit(r.job)}
+                            onClick={() => onJobEdit(r.job)}
                           >
                             <EditOutlined />
                           </Dropdown.Button>
@@ -616,10 +696,10 @@ function App() {
       </ProCard>
 
       <JobEditModal
-        visible={isModalVisible}
+        visible={visibleEditJob}
         onOk={onJobSave}
-        onCancel={handleCancel}
-        jobConfig={currentJob!}
+        onCancel={onJobSaveCancel}
+        jobConfig={currentEditJob!}
       />
       {contextHolder}
     </ProLayout>

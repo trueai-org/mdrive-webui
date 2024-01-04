@@ -56,6 +56,16 @@ export const updateJob = async (data: IDriveJob) => {
 };
 
 /**
+ * 作业添加
+ * @param data
+ * @returns
+ */
+export const addJob = async (driveId: string, data: IDriveJob) => {
+  const response = await api.post<IResult>(`/api/drive/job/${driveId}`, data);
+  return response.data;
+};
+
+/**
  * 作业更新状态
  * @param data
  * @returns

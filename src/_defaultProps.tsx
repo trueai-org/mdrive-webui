@@ -38,6 +38,11 @@ export default {
         ],
       },
       {
+        path: "https://",
+        name: "日志",
+        icon: <ChromeFilled />,
+      },
+      {
         path: "https://ant.design",
         name: "关于",
         icon: <ChromeFilled />,

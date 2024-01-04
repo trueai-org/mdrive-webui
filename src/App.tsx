@@ -533,7 +533,7 @@ function App() {
                   }}
                   headerTitle={
                     <div className="text-base whitespace-nowrap flex items-center">
-                      <span className="mr-2"> {c.name} </span>
+                      <span className="mr-2"> {c.name || "未命名云盘"} </span>
                       {c.metadata && c.metadata?.identity && (
                         <Tag className="uppercase" color="pink">
                           {c.metadata.identity}
@@ -561,7 +561,7 @@ function App() {
                           type="link"
                           size="small"
                           icon={<PlusOutlined />}
-                          onClick={()=>onJobAdd(c.id)}
+                          onClick={() => onJobAdd(c.id)}
                         ></Button>
                       </Tooltip>,
                       <OAuthComponent

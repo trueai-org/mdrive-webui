@@ -87,3 +87,37 @@ export const getFile = async (jobId: string, fileId: string) => {
   );
   return response.data;
 };
+
+/**
+ * 云盘更新
+ * @param driveId
+ * @returns
+ */
+export const updateDrive = async (driveId: string, token: string) => {
+  const response = await api.put<IResult>(`/api/drive/${driveId}`, {
+    refreshToken: token
+  });
+  return response.data;
+};
+
+/**
+ * 云盘添加
+ * @param token
+ * @returns
+ */
+export const addDrive = async (token: string) => {
+  const response = await api.post<IResult>(`/api/drive`, {
+    refreshToken: token
+  });
+  return response.data;
+};
+
+/**
+ * 云盘删除
+ * @param driveId
+ * @returns
+ */
+export const deleteDrive = async (driveId: string) => {
+  const response = await api.delete<IResult>(`/api/drive/${driveId}`);
+  return response.data;
+};

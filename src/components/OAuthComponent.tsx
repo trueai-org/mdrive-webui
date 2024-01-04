@@ -1,15 +1,17 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { Button, Input, Modal, Spin } from "antd";
+import { Button, Input, Modal, Popconfirm, Spin, message } from "antd";
 import fetchJsonp from "fetch-jsonp";
 import { PlusOutlined, EditOutlined } from "@ant-design/icons";
 import { IDrive } from "@/api/model";
+import { addDrive } from "@/api";
 
 interface OAuthComponentProps {
   clientId: string;
   redirectUri: string;
   isAdd: boolean;
   drive?: IDrive;
-  onClose: () => void;
+  onClose?: () => void;
+  onDelete?: () => void;
 }
 
 const OAuthComponent: React.FC<OAuthComponentProps> = ({
@@ -25,7 +27,8 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
   const [token, setToken] = useState(() => {
     return driveInfo?.accessToken || "";
   });
-
+  const [saveing, setSaveing] = useState(false);
+  const [msg, contextHolder] = message.useMessage();
   // const [drive, setDrive] = useState(driveInfo);
 
   useEffect(() => {
@@ -89,11 +92,40 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
 
   const hideModal = useCallback(() => {
     setIsModalVisible(false);
-    onClose();
+    onClose && onClose();
   }, [onClose]);
+
+  // 保存
+  const onSave = () => {
+    if (!token) {
+      msg.error("请授权");
+      return;
+    }
+
+    // 新增
+    setSaveing(true);
+    addDrive(token)
+      .then((res) => {
+        if (res?.success) {
+          msg.success("操作成功");
+          hideModal();
+        } else {
+          msg.error(res?.message || "操作失败");
+        }
+      })
+      .finally(() => {
+        setSaveing(false);
+      });
+  };
+
+  const onDeleteDrive = (e: any) => {
+    message.success("Click on Yes", e);
+  };
 
   return (
     <div>
+      {contextHolder}
+
       {isAdd ? (
         <Button
           type="link"
@@ -117,7 +149,7 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
         width={760}
         footer={
           <div>
-            <Button onClick={hideModal} type="primary">
+            <Button loading={saveing} onClick={onSave} type="primary">
               保存
             </Button>
             <Button onClick={hideModal} type="default">
@@ -140,11 +172,23 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
                   rows={5}
                 ></Input.TextArea>
                 <span
-                  className="text-blue-500 cursor-pointer hover:text-blue-800"
+                  className="text-blue-500 cursor-pointer hover:text-blue-700"
                   onClick={startOAuth}
                 >
                   点击扫码授权
                 </span>
+                <Popconfirm
+                  title="解除授权令牌？"
+                  description="解除授权将会同时删除当前云盘下的所有作业"
+                  onConfirm={onDeleteDrive}
+                  okText="确认"
+                  cancelText="取消"
+                  placement="topLeft"
+                >
+                  <span className="text-red-500 cursor-pointer hover:text-red-700 w-auto flex">
+                    解除授权
+                  </span>
+                </Popconfirm>
               </div>
             </div>
           </div>

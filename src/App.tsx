@@ -5,6 +5,7 @@ import {
   Dropdown,
   Input,
   MenuProps,
+  Modal,
   Table,
   Tag,
   Tooltip,
@@ -52,7 +53,11 @@ import defaultProps from "./_defaultProps";
 import "./App.css";
 
 function App() {
-  const [pathname, setPathname] = useState("/list/sub-page/sub-sub-page1");
+  const [pathname, setPathname] = useState("/");
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
+  const [showSetting, setShowSetting] = useState(false);
+
   // const [expandedRowKeys, setExpandedRowKeys] = useState<readonly Key[]>([]);
 
   const [msg, contextHolder] = message.useMessage();
@@ -533,11 +538,23 @@ function App() {
       location={{
         pathname,
       }}
-      onMenuHeaderClick={(e) => console.log("e", e)}
+      // onMenuHeaderClick={(e) => console.log("e", e)}
       menuItemRender={(item, dom) => (
         <a
           onClick={() => {
-            setPathname(item.path || "/welcome");
+            setPathname(item.path || "/");
+            if (item.path == "/welcome") {
+              setShowWelcome(true);
+            }
+            if (item.path == "/setting") {
+              setShowSetting(true);
+            }
+            if (item.path == "/about") {
+              setShowAbout(true);
+            }
+            if (item.path?.startsWith("http")) {
+              window.open(item.path);
+            }
           }}
         >
           {dom}
@@ -734,46 +751,81 @@ function App() {
         onCancel={onJobSaveCancel}
         jobConfig={currentEditJob!}
       />
+
       {contextHolder}
+      <Modal
+        title="欢迎"
+        open={showWelcome}
+        width={760}
+        footer={null}
+        onCancel={() => setShowWelcome(false)}
+      >
+        <div className="pb-6 mt-3">
+          <div className="flex flex-row">
+            <span className="flex flex-col flex-none w-20">
+              <span>授权令牌：</span>
+            </span>
+            <div className="flex flex-col flex-1">欢迎</div>
+          </div>
+        </div>
+      </Modal>
+      <Modal
+        title="关于"
+        open={showAbout}
+        width={760}
+        footer={null}
+        onCancel={() => setShowAbout(false)}
+      >
+        <div className="pb-6 mt-3">
+          <div className="flex flex-row">
+            <span className="flex flex-col flex-none w-20">
+              <span>授权令牌：</span>
+            </span>
+            <div className="flex flex-col flex-1">欢迎</div>
+          </div>
+        </div>
+      </Modal>
+      <Modal
+        title="设置"
+        open={showSetting}
+        width={760}
+        footer={null}
+        onCancel={() => setShowSetting(false)}
+      >
+        <div className="pb-6 mt-3">
+          <div className="flex flex-row">
+            <span className="flex flex-col flex-none w-20">
+              <span>授权令牌：</span>
+            </span>
+            <div className="flex flex-col flex-1">欢迎</div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* <PageContainer
+        className="w-full"
+        content="欢迎使用"
+        breadcrumbRender={false}
+      >
+        // 也可以通过 pathname 直接渲染页面
+        {pathname == "/" && <>123</>}
+
+        {pathname == "/welcome" && <>44444</>}
+
+        // 2 种方式
+        import reactLogo from "./assets/react.svg";
+        import viteLogo from "/vite.svg";
+
+        <div>
+          <a href="https://vitejs.dev" target="_blank">
+            <img src={viteLogo} className="logo" alt="Vite logo" />
+          </a>
+          <a href="https://react.dev" target="_blank">
+            <img src={reactLogo} className="logo react" alt="React logo" />
+          </a>
+        </div>
+      </PageContainer> */}
     </ProLayout>
-
-    //   <PageContainer
-    //     className="w-full"
-    //     content="欢迎使用"
-    //     breadcrumbRender={false}
-    //   >
-    //     <div>Hello World</div>
-
-    //     <div>
-    //       <a href="https://vitejs.dev" target="_blank">
-    //         <img src={viteLogo} className="logo" alt="Vite logo" />
-    //       </a>
-    //       <a href="https://react.dev" target="_blank">
-    //         <img src={reactLogo} className="logo react" alt="React logo" />
-    //       </a>
-    //     </div>
-
-    //     <div style={{ padding: "0 24px" }}>
-    //       <h1 className="text-red-400">antd version: {version}</h1>
-    //       <Space>
-    //         <DatePicker />
-    //         <Button type="primary">Primary Button</Button>
-    //       </Space>
-    //     </div>
-
-    //     <div className="card">
-    //       <button onClick={() => setCount((count) => count + 1)}>
-    //         count is {count}
-    //       </button>
-    //       <p>
-    //         Edit <code>src/App.tsx</code> and save to test HMR
-    //       </p>
-    //     </div>
-    //     <p className="read-the-docs">
-    //       Click on the Vite and React logos to learn more
-    //     </p>
-    //   </PageContainer>
-    // </ProLayout>
   );
 }
 

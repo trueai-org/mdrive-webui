@@ -21,7 +21,6 @@ import {
   ProSettings,
 } from "@ant-design/pro-components";
 import {
-  CloudUploadOutlined,
   RollbackOutlined,
   ReloadOutlined,
   EditOutlined,
@@ -830,7 +829,7 @@ function App() {
                 disabled={!job}
                 icon={<ReloadOutlined />}
               ></Button>
-              <Button icon={<CloudUploadOutlined />}></Button>
+              {/* <Button icon={<CloudUploadOutlined />}></Button> */}
             </div>
             <Table
               virtual

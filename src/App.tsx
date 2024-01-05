@@ -6,12 +6,18 @@ import {
   Input,
   MenuProps,
   Modal,
+  Switch,
   Table,
   Tag,
   Tooltip,
   message,
 } from "antd";
-import { ProCard, ProLayout, ProList } from "@ant-design/pro-components";
+import {
+  ProCard,
+  ProLayout,
+  ProList,
+  ProSettings,
+} from "@ant-design/pro-components";
 import {
   CloudUploadOutlined,
   RollbackOutlined,
@@ -51,6 +57,7 @@ import { MenuInfo } from "rc-menu/lib/interface";
 import defaultProps from "./_defaultProps";
 
 import "./App.css";
+import { Select } from "antd/lib";
 
 function App() {
   const [pathname, setPathname] = useState("/");
@@ -530,11 +537,83 @@ function App() {
     }
   };
 
+  const colors = [
+    {
+      label: "天蓝",
+      value: "#1677FF",
+    },
+    {
+      label: "拂晓",
+      value: "#1890ff",
+    },
+    {
+      label: "薄暮",
+      value: "#F5222D",
+    },
+    {
+      label: "火山",
+      value: "#FA541C",
+    },
+    {
+      label: "日暮",
+      value: "#FAAD14",
+    },
+    {
+      label: "明青",
+      value: "#13C2C2",
+    },
+    {
+      label: "草绿",
+      value: "#52C41A",
+    },
+    {
+      label: "深蓝",
+      value: "#2F54EB",
+    },
+    {
+      label: "酱紫",
+      value: "#722ED1",
+    },
+  ];
+  const [settings, setSetting] = useState<Partial<ProSettings> | undefined>(
+    () => {
+      if (localStorage.getItem("theme")) {
+        return JSON.parse(localStorage.getItem("theme")!) as ProSettings;
+      }
+      return {
+        fixSiderbar: true,
+        layout: "mix",
+        splitMenus: true,
+      };
+    }
+  );
+
   return (
+    // <ConfigProvider
+    //   theme={{
+    //     token: {
+    //       // colorPrimary: primary,
+    //       // // Seed Token，影响范围大
+    //       // colorPrimary: "#00b96b",
+    //       // borderRadius: 2,
+    //       // // 派生变量，影响范围小
+    //       // colorBgContainer: "#f6ffed",
+    //     },
+
+    //     //  // 1. 单独使用暗色算法
+    //     //  algorithm: theme.darkAlgorithm,
+    //   }}
+    // >
     <ProLayout
       title="MDrive"
+      // style={{
+      //   paddingInline: "12px"
+      //   // height: "100vh",
+      //   // overflow: 'auto',
+      // }}
       logo={<img src="/logo.png" style={{ width: 24, height: 24 }} />}
       {...defaultProps}
+      {...settings}
       location={{
         pathname,
       }}
@@ -563,6 +642,16 @@ function App() {
       layout="top"
       loading={loading}
     >
+      {/* <SettingDrawer
+        pathname={pathname}
+        enableDarkTheme
+        settings={settings}
+        onSettingChange={(changeSetting) => {
+          setSetting(changeSetting);
+        }}
+        disableUrlParams={false}
+      /> */}
+
       <ProCard split="vertical" style={{ minHeight: 520 }}>
         <ProCard
           bodyStyle={{ margin: 0, padding: 0 }}
@@ -776,12 +865,29 @@ function App() {
         footer={null}
         onCancel={() => setShowAbout(false)}
       >
-        <div className="pb-6 mt-3">
-          <div className="flex flex-row">
-            <span className="flex flex-col flex-none w-20">
-              <span>授权令牌：</span>
-            </span>
-            <div className="flex flex-col flex-1">欢迎</div>
+        <div className="my-3">
+          <div className="flex flex-col space-y-2">
+            <div>
+              多平台、模块化、安全的云盘同步工具备份，支持百度网盘、阿里云盘等，集成
+              Duplicati、Kopia
+              等多种模块，支持加密还原等，支持单向、镜像、双向等同步备份，完全免费开源。
+            </div>
+            <div>
+              提供 Docker 版、Duplicati 版、Kopia 版、Windows 服务版、Windows
+              版、手机版、网页版、Linux版、Mac 版等多平台版本。
+            </div>
+            <div>
+              支持多种算法同步与备份，保证数据的安全性，任何第三方、任何云盘服务商都无法查看或分析你的数据，只有通过你本人设置的安全密钥才能解密数据，保证您的数据安全和隐私。
+            </div>
+            <div>
+              更多文档：
+              <a
+                target="_blank"
+                href="https://github.com/trueai-org/MDriveSync"
+              >
+                MDriveSync 官网
+              </a>
+            </div>
           </div>
         </div>
       </Modal>
@@ -792,12 +898,62 @@ function App() {
         footer={null}
         onCancel={() => setShowSetting(false)}
       >
-        <div className="pb-6 mt-3">
+        <div className="my-3 flex flex-col space-y-3">
+          <div className="flex flex-row items-center">
+            <span className="flex flex-col flex-none w-20">
+              <span>网站主题：</span>
+            </span>
+            <div className="flex flex-row items-center space-x-2">
+              <Select
+                className="w-24"
+                options={colors}
+                value={settings?.colorPrimary}
+                placeholder="主题色"
+                onChange={(e) => {
+                  const value: ProSettings = {
+                    ...settings,
+                    ...{ colorPrimary: e },
+                  };
+                  setSetting(value);
+                  localStorage.setItem("theme", JSON.stringify(value));
+                }}
+              ></Select>
+              <span
+                style={{
+                  backgroundColor: settings?.colorPrimary,
+                }}
+                className={`w-6 h-6 block rounded`}
+              ></span>
+            </div>
+          </div>
+          <div className="flex flex-row items-center">
+            <span className="flex flex-col flex-none w-20">
+              <span>暗色模式：</span>
+            </span>
+            <div className="flex flex-col">
+              <Switch
+                checked={settings?.navTheme === "realDark"}
+                onChange={(e) => {
+                  const navTheme = e ? "realDark" : "light";
+                  const value: ProSettings = {
+                    ...settings,
+                    ...{ navTheme: navTheme },
+                  };
+                  setSetting(value);
+                  localStorage.setItem("theme", JSON.stringify(value));
+                }}
+              />
+            </div>
+          </div>
           <div className="flex flex-row">
             <span className="flex flex-col flex-none w-20">
-              <span>授权令牌：</span>
+              <span>登录密码：</span>
             </span>
-            <div className="flex flex-col flex-1">欢迎</div>
+            <div className="flex flex-col flex-1 text-gray-400">
+              请修改配置 appsettings.json，如果通过 docker
+              启动也可以通过环境变量修改，示例：-e BASIC_AUTH_USER=admin -e
+              BASIC_AUTH_PASSWORD=123456
+            </div>
           </div>
         </div>
       </Modal>
@@ -826,6 +982,7 @@ function App() {
         </div>
       </PageContainer> */}
     </ProLayout>
+    // </ConfigProvider>
   );
 }
 

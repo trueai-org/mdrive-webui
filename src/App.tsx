@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import React from "react";
 import {
   Button,
@@ -10,6 +10,8 @@ import {
   Table,
   Tag,
   Tooltip,
+  Tour,
+  TourProps,
   message,
 } from "antd";
 import {
@@ -61,7 +63,6 @@ import { Select } from "antd/lib";
 
 function App() {
   const [pathname, setPathname] = useState("/");
-  const [showWelcome, setShowWelcome] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const [showSetting, setShowSetting] = useState(false);
 
@@ -575,6 +576,7 @@ function App() {
       value: "#722ED1",
     },
   ];
+
   const [settings, setSetting] = useState<Partial<ProSettings> | undefined>(
     () => {
       if (localStorage.getItem("theme")) {
@@ -587,6 +589,23 @@ function App() {
       };
     }
   );
+
+  // 引导
+  const welRef1 = useRef(null);
+  const welRef2 = useRef(null);
+  const [welcomOpen, setWelcomOpen] = useState<boolean>(false);
+  const welcomSteps: TourProps["steps"] = [
+    {
+      title: "欢迎使用 MDrive 阿里云盘数据同步工具",
+      description: "在这里添加授权、管理授权，添加作业，管理作业等操作。",
+      target: () => welRef1.current,
+    },
+    {
+      title: "在这里可以查看或管理云盘文件",
+      description: "点击文件夹可以进入文件夹，点击文件可以下载。",
+      target: () => welRef2.current,
+    },
+  ];
 
   return (
     // <ConfigProvider
@@ -623,7 +642,7 @@ function App() {
           onClick={() => {
             setPathname(item.path || "/");
             if (item.path == "/welcome") {
-              setShowWelcome(true);
+              setWelcomOpen(true);
             }
             if (item.path == "/setting") {
               setShowSetting(true);
@@ -658,6 +677,7 @@ function App() {
           headerBordered
           title={<div className="font-bold">存储和作业</div>}
           colSpan={"432px"}
+          ref={welRef1}
           extra={<OAuthComponent onOk={(tk) => onDriveSave(tk)} isAdd />}
         >
           {drives &&
@@ -786,6 +806,7 @@ function App() {
           bodyStyle={{ margin: 0, padding: 0 }}
           headerBordered
           title={<div className="font-bold">文件管理</div>}
+          ref={welRef2}
         >
           <div className="flex px-6 py-4 flex-col w-full space-y-3 overflow-y-auto">
             <div className="flex flex-row space-x-2 items-center w-full">
@@ -841,23 +862,6 @@ function App() {
         jobConfig={currentEditJob!}
       />
 
-      {contextHolder}
-      <Modal
-        title="欢迎"
-        open={showWelcome}
-        width={760}
-        footer={null}
-        onCancel={() => setShowWelcome(false)}
-      >
-        <div className="pb-6 mt-3">
-          <div className="flex flex-row">
-            <span className="flex flex-col flex-none w-20">
-              <span>授权令牌：</span>
-            </span>
-            <div className="flex flex-col flex-1">欢迎</div>
-          </div>
-        </div>
-      </Modal>
       <Modal
         title="关于"
         open={showAbout}
@@ -891,6 +895,7 @@ function App() {
           </div>
         </div>
       </Modal>
+
       <Modal
         title="设置"
         open={showSetting}
@@ -957,6 +962,14 @@ function App() {
           </div>
         </div>
       </Modal>
+
+      {contextHolder}
+
+      <Tour
+        open={welcomOpen}
+        onClose={() => setWelcomOpen(false)}
+        steps={welcomSteps}
+      />
 
       {/* <PageContainer
         className="w-full"

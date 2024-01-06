@@ -12,7 +12,7 @@ import {
   TreeSelect,
   TreeSelectProps,
 } from "antd";
-import { FolderOutlined } from "@ant-design/icons";
+import { FolderTwoTone, HomeTwoTone, UserOutlined } from "@ant-design/icons";
 import { IDriveJob } from "@/api/model";
 import { getCronTags, getPaths } from "@/api";
 import { DefaultOptionType } from "antd/es/select";
@@ -46,23 +46,82 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
     });
     getPaths().then((res) => {
       if (res.success) {
-        const vs = res.data!.map((x) => {
-          return {
-            title: x.text,
-            label: x.text,
-            value: x.id,
-            key: x.id,
-            children: [],
-            icon: <FolderOutlined />,
-          };
-        });
-        setPaths(vs);
+        const us = res
+          .data!.filter((x) => x.id.includes("%"))
+          .map((x) => {
+            return {
+              title: x.text,
+              label: x.text,
+              value: x.resolvedpath || x.id,
+              key: x.resolvedpath || x.id,
+              icon: <FolderTwoTone />,
+              children: [],
+            };
+          });
+        const cs = res
+          .data!.filter((x) => !x.id.includes("%"))
+          .map((x) => {
+            return {
+              title: x.text,
+              label: x.text,
+              value: x.id,
+              key: x.id,
+              icon: <FolderTwoTone />,
+              children: [],
+            };
+          });
+        const rs: DefaultOptionType[] = [];
+        if (us.length > 0) {
+          rs.push({
+            title: "用户数据",
+            label: "用户数据",
+            value: ":user",
+            key: ":user",
+            icon: <UserOutlined className="text-[#1677FF]" />,
+            children: us,
+            checkable: false,
+          });
+        }
+        if (cs.length > 0) {
+          rs.push({
+            title: "计算机",
+            label: "计算机",
+            value: ":jsj",
+            key: ":jsj",
+            icon: <HomeTwoTone />,
+            children: cs,
+            checkable: false,
+          });
+        }
+        // rs.push({
+        //   title: "源数据",
+        //   label: "源数据",
+        //   value: ":sources",
+        //   key: ":sources",
+        //   icon: <FolderOpenTwoTone />,
+        //   children: value?.map((x) => {
+        //     return {
+        //       title: x,
+        //       label: x,
+        //       value: ":" + x,
+        //       key: ":" + x,
+        //       icon: <FolderTwoTone />,
+        //       checked: true,
+        //       isLeaf: true,
+        //     };
+        //   }),
+        //   checkable: false,
+        // });
+
+        setPaths(rs);
       }
     });
   }, []);
 
   useEffect(() => {
     if (form && visible) {
+      setCurrentStep(0);
+      setShowTreeSelect(true);
       setAllStepsData(jobConfig);
       form.setFieldsValue(jobConfig);
       setValue(jobConfig.sources || []);
@@ -130,8 +189,49 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
       }
       return prev;
     });
+
+    // const ss = {
+    //   title: "源数据",
+    //   label: "源数据",
+    //   value: ":sources",
+    //   key: ":sources",
+    //   icon: <FolderOpenTwoTone />,
+    //   children: value?.map((x) => {
+    //     return {
+    //       title: x,
+    //       label: x,
+    //       value: ":" + x,
+    //       key: ":" + x,
+    //       icon: <FolderTwoTone />,
+    //       checked: true,
+    //       isLeaf: true
+    //     };
+    //   }),
+    //   checkable: false,
+    // };
+    // setPaths((prevPaths) => {
+    //   return prevPaths.map((path) => (path.key === ":sources" ? ss : path));
+    // });
   };
+
+  // 递归更新
+  const updateTreeData: any = (list: any[], key: any, children: any[]) => {
+    return list.map((node) => {
+      if (node.key === key) {
+        return { ...node, children };
+      }
+      if (node.children && node.children.length > 0) {
+        return {
+          ...node,
+          children: updateTreeData(node.children, key, children),
+        };
+      }
+      return node;
+    });
+  };
+
   const onLoadData: TreeSelectProps["loadData"] = async (node) => {
+    if (!node.key || node.key.toString().startsWith(":")) return;
     try {
       const res = await getPaths(node.key as string);
       if (res.success) {
@@ -141,14 +241,18 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
           value: x.id,
           key: x.id,
           children: [],
-          icon: <FolderOutlined />,
+          icon: <FolderTwoTone />,
         }));
 
-        setPaths((prevPaths) => {
-          return prevPaths.map((path) =>
-            path.key === node.key ? { ...path, children: childNodes } : path
-          );
-        });
+        setPaths((prevPaths) =>
+          updateTreeData(prevPaths, node.key, childNodes || [])
+        );
+
+        // setPaths((prevPaths) => {
+        //   return prevPaths.map((path) =>
+        //     path.key === node.key ? { ...path, children: childNodes } : path
+        //   );
+        // });
       }
     } catch (error) {
       message.error("加载子文件夹时出错");
@@ -257,14 +361,17 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
                   treeData={paths}
                   onChange={onChange}
                   treeCheckable
+                  treeIcon
                   style={{
                     width: "100%",
                   }}
                   allowClear
+                  treeDefaultExpandedKeys={[":user", ":jsj", ":sources"]}
                   placeholder={"请选择文件夹"}
                   showCheckedStrategy={SHOW_PARENT}
                   value={value}
                   loadData={onLoadData}
+                  treeNodeLabelProp="key"
                 />
               ) : (
                 <Select

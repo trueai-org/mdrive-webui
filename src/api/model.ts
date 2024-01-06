@@ -112,3 +112,53 @@ export enum JobState {
   Disabled = 100,
   Deleted = 101,
 }
+
+/**
+ * 类似于 ExtJS treenode 的类，用于 JSON 导出
+ */
+export interface ITreeNode {
+  /**
+   * 节点显示的文本
+   */
+  text: string;
+
+  /**
+   * 节点的 ID
+   */
+  id: string;
+
+  /**
+   * 应用于节点的类
+   */
+  cls: string;
+
+  /**
+   * 应用于图标的类
+   */
+  iconCls: string;
+
+  /**
+   * 如果元素应该被选中则为 true
+   */
+  check: boolean;
+
+  /**
+   * 如果元素是叶节点则为 true
+   */
+  leaf: boolean;
+
+  /**
+   * 获取或设置当前路径，如果该项是一个符号路径
+   */
+  resolvedpath: string;
+
+  /**
+   * 如果元素被隐藏则为 true
+   */
+  hidden: boolean;
+
+  /**
+   * 如果元素是一个符号链接则为 true
+   */
+  symlink: boolean;
+}

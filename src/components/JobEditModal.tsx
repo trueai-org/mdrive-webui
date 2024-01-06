@@ -9,11 +9,16 @@ import {
   Button,
   Steps,
   message,
+  TreeSelect,
+  TreeSelectProps,
 } from "antd";
+import { FolderOutlined } from "@ant-design/icons";
 import { IDriveJob } from "@/api/model";
-import { getCronTags } from "@/api";
+import { getCronTags, getPaths } from "@/api";
+import { DefaultOptionType } from "antd/es/select";
 
 const { Step } = Steps;
+const { SHOW_PARENT } = TreeSelect;
 
 interface JobEditModalProps {
   visible: boolean;
@@ -39,12 +44,28 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
     getCronTags().then((res) => {
       setCronTags(res);
     });
+    getPaths().then((res) => {
+      if (res.success) {
+        const vs = res.data!.map((x) => {
+          return {
+            title: x.text,
+            label: x.text,
+            value: x.id,
+            key: x.id,
+            children: [],
+            icon: <FolderOutlined />,
+          };
+        });
+        setPaths(vs);
+      }
+    });
   }, []);
 
   useEffect(() => {
     if (form && visible) {
       setAllStepsData(jobConfig);
       form.setFieldsValue(jobConfig);
+      setValue(jobConfig.sources || []);
     }
   }, [visible, jobConfig, form]);
 
@@ -93,6 +114,45 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
       .finally(() => {
         setSaveing(false);
       });
+  };
+
+  // 树下拉选择框
+  const [showTreeSelect, setShowTreeSelect] = useState(true);
+  const [value, setValue] = useState<string[]>(() => {
+    return jobConfig?.sources || [];
+  });
+  const [paths, setPaths] = useState<DefaultOptionType[]>([]);
+  const onChange = (newValue: string[]) => {
+    setValue(newValue);
+    setAllStepsData((prev) => {
+      if (prev) {
+        prev.sources = newValue;
+      }
+      return prev;
+    });
+  };
+  const onLoadData: TreeSelectProps["loadData"] = async (node) => {
+    try {
+      const res = await getPaths(node.key as string);
+      if (res.success) {
+        const childNodes = res.data?.map((x) => ({
+          title: x.text,
+          label: x.text,
+          value: x.id,
+          key: x.id,
+          children: [],
+          icon: <FolderOutlined />,
+        }));
+
+        setPaths((prevPaths) => {
+          return prevPaths.map((path) =>
+            path.key === node.key ? { ...path, children: childNodes } : path
+          );
+        });
+      }
+    } catch (error) {
+      message.error("加载子文件夹时出错");
+    }
   };
 
   return (
@@ -188,12 +248,44 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
           <>
             <Form.Item
               required
-              name="sources"
               label="本地目录"
               tooltip="源路劲、本地路径，请选择本地文件夹"
               help="请选择或输入本地文件夹，支持多选，例如：E:\test, E:\kopia"
             >
-              <Select mode="tags" tokenSeparators={[","]} />
+              {showTreeSelect ? (
+                <TreeSelect
+                  treeData={paths}
+                  onChange={onChange}
+                  treeCheckable
+                  style={{
+                    width: "100%",
+                  }}
+                  allowClear
+                  placeholder={"请选择文件夹"}
+                  showCheckedStrategy={SHOW_PARENT}
+                  value={value}
+                  loadData={onLoadData}
+                />
+              ) : (
+                <Select
+                  onChange={onChange}
+                  value={value}
+                  mode="tags"
+                  allowClear
+                  tokenSeparators={[",", "，"]}
+                  placeholder={"请输入粘贴文件夹路径"}
+                />
+              )}
+              <span
+                className="cursor-pointer text-blue-500 block py-1"
+                onClick={() => {
+                  setShowTreeSelect(!showTreeSelect);
+                }}
+              >
+                {showTreeSelect
+                  ? "切换为输入文件夹"
+                  : "切换为选择文件夹，多个以逗号分割"}
+              </span>
             </Form.Item>
 
             <Form.Item
@@ -222,14 +314,17 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
               tooltip="排除本地不需要过滤的文件/文件夹"
               help={
                 <>
-                  <div>支持正则表达式，多个文件/文件夹用英文逗号分隔，过滤的文件/文件夹不会同步</div>
                   <div>
-                    示例：/Recovery/*, *.log, *.tmp, **/@Recycle/*, **/logs/*，更多示例请参考官网。
+                    支持正则表达式，多个文件/文件夹用逗号分隔，过滤的文件/文件夹不会同步
+                  </div>
+                  <div>
+                    示例：/Recovery/*, *.log, *.tmp, **/@Recycle/*,
+                    **/logs/*，更多示例请参考官网。
                   </div>
                 </>
               }
             >
-              <Select mode="tags" tokenSeparators={[","]} />
+              <Select mode="tags" tokenSeparators={[",", "，"]} />
             </Form.Item>
             <Form.Item
               name="restore"

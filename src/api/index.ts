@@ -5,6 +5,7 @@ import {
   IDriveFile,
   IDriveJob,
   IResult,
+  ITreeNode,
 } from "./model";
 
 // 创建 axios 实例
@@ -129,5 +130,17 @@ export const addDrive = async (token: string) => {
  */
 export const deleteDrive = async (driveId: string) => {
   const response = await api.delete<IResult>(`/api/drive/${driveId}`);
+  return response.data;
+};
+
+/**
+ * 本地路径列表
+ * @param driveId
+ * @returns
+ */
+export const getPaths = async (path: string = "") => {
+  const response = await api.post<IResult<ITreeNode[]>>(`/api/drive/paths`, {
+    path: path
+  });
   return response.data;
 };

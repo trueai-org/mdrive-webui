@@ -46,6 +46,7 @@ import {
   getDriveFiles,
   getDrives,
   getFile,
+  getJobs,
   updateDrive,
   updateJob,
   updateJobState,
@@ -59,6 +60,7 @@ import defaultProps from "./_defaultProps";
 
 import "./App.css";
 import { Select } from "antd/lib";
+import { useQuery } from "@tanstack/react-query";
 
 function App() {
   const [pathname, setPathname] = useState("/");
@@ -225,6 +227,10 @@ function App() {
   };
   const menuItems: MenuProps["items"] = [
     {
+      key: JobState.Continue,
+      label: "继续",
+    },
+    {
       key: JobState.BackingUp,
       label: "执行",
     },
@@ -267,13 +273,15 @@ function App() {
       case JobState.Scanning:
         return menuItems.filter((x) => x?.key == JobState.Paused);
       case JobState.BackingUp:
-        return menuItems.filter((x) => x?.key == JobState.Paused);
+        return menuItems.filter(
+          (x) => x?.key == JobState.Paused || x?.key == JobState.Cancelled
+        );
       case JobState.Restoring:
         return menuItems.filter((x) => x?.key == JobState.Paused);
       case JobState.Verifying:
         return menuItems.filter((x) => x?.key == JobState.Paused);
       case JobState.Queued:
-        return menuItems.filter((x) => x?.key == JobState.Paused);
+        return menuItems.filter((x) => x?.key == JobState.Cancelled);
       case JobState.Completed:
         return menuItems.filter(
           (x) =>
@@ -282,7 +290,9 @@ function App() {
             x?.key == JobState.Deleted
         );
       case JobState.Paused:
-        return menuItems.filter((x) => x?.key == JobState.Cancelled);
+        return menuItems.filter(
+          (x) => x?.key == JobState.Continue || x?.key == JobState.Cancelled
+        );
       case JobState.Error:
         return menuItems.filter(
           (x) =>
@@ -606,6 +616,50 @@ function App() {
     },
   ];
 
+  // 检查作业状态
+  const { data: dataJobStates, refetch } = useQuery({
+    queryKey: [`jobs`],
+    queryFn: async () => {
+      const res = await getJobs();
+      return res.data;
+    },
+    staleTime: 60 * 1000, // 60s 缓存
+    refetchInterval: 1 * 1000, // 1 秒查询一次
+  });
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  useEffect(() => {
+    if (dataJobStates && drives) {
+      // 创建 drives 的深拷贝
+      const newDrives = drives.map((drive) => ({
+        ...drive,
+        jobs: drive.jobs.map((job) => {
+          // const updatedJob = dataJobStates.find((d) => d.id === job.id);
+          // return updatedJob ? { ...job, state: updatedJob.state } : job;
+
+          const updatedJob = dataJobStates.find((d) => d.id === job.id);
+          if (updatedJob) {
+            // 这里更新多个字段
+            return {
+              ...job,
+              state: updatedJob.state,
+              metadata: updatedJob.metadata,
+            };
+          }
+          return job;
+        }),
+      }));
+
+      // 使用新的 drives 数组来更新状态
+      setDrives(newDrives);
+    }
+
+    // 只有状态变化时，检查更新
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataJobStates]);
+
   return (
     // <ConfigProvider
     //   theme={{
@@ -774,6 +828,12 @@ function App() {
                                 row.job?.metadata?.totalSize || 0
                               )}
                             </div>
+
+                            {row.job?.metadata?.message && (
+                              <div className="text-xs">
+                                {row.job!.metadata!.message}
+                              </div>
+                            )}
                           </>
                         );
                       },

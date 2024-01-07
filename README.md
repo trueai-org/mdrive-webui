@@ -65,6 +65,12 @@ yarn add date-fns
 # 配置别名
 yarn add @types/node -D
 
+# 配置 jsonp
+yarn add fetch-jsonp
+
+# 配置 swr/react-query
+yarn add @tanstack/react-query
+
 # 待定
 # 1. 添加 eslint
 # 2. 添加 prettier

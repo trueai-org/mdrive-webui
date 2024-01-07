@@ -21,14 +21,22 @@ export const getDrives = async () => {
 };
 
 /**
+ * 获取云盘所有作业
+ * @returns
+ */
+export const getJobs = async () => {
+  const response = await api.get<IResult<IDriveJob[]>>("/api/drive/jobs");
+  return response.data;
+};
+
+/**
  * 常用表达式
- * @returns 
+ * @returns
  */
 export const getCronTags = async () => {
   const response = await api.get<string[]>("/api/drive/crons");
   return response.data;
 };
-
 
 /**
  * 获取云盘文件
@@ -106,7 +114,7 @@ export const getFile = async (jobId: string, fileId: string) => {
  */
 export const updateDrive = async (driveId: string, token: string) => {
   const response = await api.put<IResult>(`/api/drive/${driveId}`, {
-    refreshToken: token
+    refreshToken: token,
   });
   return response.data;
 };
@@ -118,7 +126,7 @@ export const updateDrive = async (driveId: string, token: string) => {
  */
 export const addDrive = async (token: string) => {
   const response = await api.post<IResult>(`/api/drive`, {
-    refreshToken: token
+    refreshToken: token,
   });
   return response.data;
 };
@@ -140,7 +148,7 @@ export const deleteDrive = async (driveId: string) => {
  */
 export const getPaths = async (path: string = "") => {
   const response = await api.post<IResult<ITreeNode[]>>(`/api/drive/paths`, {
-    path: path
+    path: path,
   });
   return response.data;
 };

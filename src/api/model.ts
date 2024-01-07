@@ -42,6 +42,7 @@ export interface IJobMetadata {
   fileCount: number;
   folderCount: number;
   totalSize: number;
+  message?: string;
 }
 
 export interface IDriveMetadata {
@@ -111,6 +112,7 @@ export enum JobState {
   Cancelled = 19,
   Disabled = 100,
   Deleted = 101,
+  Continue = 102,
 }
 
 /**

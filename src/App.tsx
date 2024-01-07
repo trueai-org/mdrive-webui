@@ -692,6 +692,31 @@ function App() {
       location={{
         pathname,
       }}
+      footerRender={() => {
+        return (
+          <div className="text-center text-gray-400">
+            Power by{" "}
+            <a target="_blank" href="https://github.com/trueai-org/MDriveSync">
+              MDrive
+            </a>{" "}
+            v1.1.2 |{" "}
+            <a
+              target="_blank"
+              href="https://github.com/trueai-org/MDriveSyncWebUI"
+            >
+              WebUI
+            </a>{" "}
+            |{" "}
+            <a target="_blank" href="https://github.com/trueai-org/MDriveSync">
+              官网
+            </a>{" "}
+            |{" "}
+            <a target="_blank" href="https://duplicati.net">
+              Duplicati
+            </a>
+          </div>
+        );
+      }}
       // onMenuHeaderClick={(e) => console.log("e", e)}
       menuItemRender={(item, dom) => (
         <a

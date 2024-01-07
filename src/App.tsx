@@ -382,8 +382,11 @@ function App() {
    * @param j
    */
   const onSelectJob = (j: IDriveJob) => {
-    setJob(j);
-    loadFiles(j.id);
+    // 非禁用、删除
+    if (j.state != JobState.Disabled && j.state != JobState.Initializing) {
+      setJob(j);
+      loadFiles(j.id);
+    }
   };
 
   /**

@@ -69,7 +69,6 @@ function App() {
 
   // const [expandedRowKeys, setExpandedRowKeys] = useState<readonly Key[]>([]);
 
-  const [msg, contextHolder] = message.useMessage();
   const [loading, setLoading] = useState(false);
   const [tableLoading, setTableLoading] = useState(false);
 
@@ -213,12 +212,10 @@ function App() {
     updateJobState(jobId, e.key)
       .then((res) => {
         if (res?.success) {
-          msg.success("操作成功");
-          setTimeout(() => {
-            loadDrives();
-          }, 500);
+          message.success("操作成功");
+          loadDrives();
         } else {
-          msg.error(res?.message || "操作失败");
+          message.error(res?.message || "操作失败");
         }
       })
       .finally(() => {
@@ -349,12 +346,6 @@ function App() {
     });
   };
 
-  const delayLoadDrives = () => {
-    setTimeout(() => {
-      loadDrives();
-    }, 500);
-  };
-
   /**
    * 加载文件
    * @param jobId
@@ -481,26 +472,22 @@ function App() {
         // 编辑
         updateJob(value).then((res) => {
           if (res?.success) {
-            msg.success("操作成功");
+            message.success("操作成功");
             setVisibleEditJob(false);
-            setTimeout(() => {
-              loadDrives();
-            }, 500);
+            loadDrives();
           } else {
-            msg.error(res?.message || "操作失败");
+            message.error(res?.message || "操作失败");
           }
         });
       } else {
         // 新增
         addJob(currentDriveId!, value).then((res) => {
           if (res?.success) {
-            msg.success("操作成功");
+            message.success("操作成功");
             setVisibleEditJob(false);
-            setTimeout(() => {
-              loadDrives();
-            }, 500);
+            loadDrives();
           } else {
-            msg.error(res?.message || "操作失败");
+            message.error(res?.message || "操作失败");
           }
         });
       }
@@ -520,10 +507,10 @@ function App() {
   const onDriveDelete = async (driveId: string) => {
     const res = await deleteDrive(driveId);
     if (res?.success) {
-      msg.success("操作成功");
-      delayLoadDrives();
+      message.success("操作成功");
+      loadDrives();
     } else {
-      msg.error(res?.message || "操作失败");
+      message.error(res?.message || "操作失败");
     }
   };
 
@@ -534,18 +521,18 @@ function App() {
     if (driveId) {
       const res = await updateDrive(driveId, token);
       if (res?.success) {
-        msg.success("保存成功");
-        delayLoadDrives();
+        message.success("保存成功");
+        loadDrives();
       } else {
-        msg.error(res?.message || "操作失败");
+        message.error(res?.message || "操作失败");
       }
     } else {
       const res = await addDrive(token);
       if (res?.success) {
-        msg.success("保存成功");
-        delayLoadDrives();
+        message.success("保存成功");
+        loadDrives();
       } else {
-        msg.error(res?.message || "操作失败");
+        message.error(res?.message || "操作失败");
       }
     }
   };
@@ -1049,8 +1036,6 @@ function App() {
           </div>
         </div>
       </Modal>
-
-      {contextHolder}
 
       <Tour
         open={welcomOpen}

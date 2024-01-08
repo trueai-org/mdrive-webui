@@ -36,7 +36,6 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
   const [form] = Form.useForm<IDriveJob>();
   const [currentStep, setCurrentStep] = useState(0);
   const [allStepsData, setAllStepsData] = useState<IDriveJob>();
-  const [msg, contextHolder] = message.useMessage();
   const [saveing, setSaveing] = useState(false);
   const [cronTags, setCronTags] = useState<string[]>([]);
 
@@ -142,7 +141,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
         setCurrentStep(currentStep + 1);
       })
       .catch((errorInfo) => {
-        msg.error(errorInfo?.errorFields[0].errors[0]);
+        message.error(errorInfo?.errorFields[0].errors[0]);
       });
   };
 
@@ -154,7 +153,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
         setCurrentStep(currentStep - 1);
       })
       .catch((errorInfo) => {
-        msg.error(errorInfo?.errorFields[0].errors[0]);
+        message.error(errorInfo?.errorFields[0].errors[0]);
       });
   };
 
@@ -168,7 +167,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
         onOk && onOk(value);
       })
       .catch((errorInfo) => {
-        msg.error(errorInfo?.errorFields[0].errors[0]);
+        message.error(errorInfo?.errorFields[0].errors[0]);
       })
       .finally(() => {
         setSaveing(false);
@@ -281,7 +280,6 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
       ]}
       className="w-full"
     >
-      {contextHolder}
       <Steps
         className="py-3"
         onChange={(e) => {

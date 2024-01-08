@@ -31,7 +31,6 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
   });
 
   const [saveing, setSaveing] = useState(false);
-  const [msg, contextHolder] = message.useMessage();
   // const [drive, setDrive] = useState(driveInfo);
 
   useEffect(() => {
@@ -101,7 +100,7 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
   // 保存
   const onSave = async () => {
     if (!token) {
-      msg.error("请授权");
+      message.error("请授权");
       return;
     }
 
@@ -113,8 +112,6 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
 
   return (
     <div>
-      {contextHolder}
-
       {isAdd ? (
         <Button
           type="link"

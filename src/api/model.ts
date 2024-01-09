@@ -15,6 +15,7 @@ export interface IDrive {
 }
 
 export interface IDriveJob {
+  isMount?: boolean;
   id: string;
   name: string;
   description: string;
@@ -35,6 +36,8 @@ export interface IDriveJob {
   isRecycleBin: boolean;
   uploadThread: number;
   downloadThread: number;
+  mountPoint?: string;
+  mountOnStartup?: boolean;
   metadata?: IJobMetadata;
 }
 

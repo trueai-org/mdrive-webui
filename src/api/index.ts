@@ -30,6 +30,39 @@ export const getJobs = async () => {
 };
 
 /**
+ * 设置挂载点
+ * @param jobId
+ * @param mountPoint
+ * @returns
+ */
+export const updateSetMount = async (jobId: string, mountPoint: string) => {
+  const response = await api.post<IResult>(`/api/drive/mount/${jobId}`, {
+    mountPoint: mountPoint,
+  });
+  return response.data;
+};
+
+/**
+ * 取消挂载点
+ * @param jobId
+ * @param mountPoint
+ * @returns
+ */
+export const updateSetUnmount = async (jobId: string) => {
+  const response = await api.post<IResult>(`/api/drive/unmount/${jobId}`);
+  return response.data;
+};
+
+/**
+ * 获取磁盘挂载点
+ * @returns
+ */
+export const getPoints = async () => {
+  const response = await api.get<IResult<string[]>>("/api/drive/points");
+  return response.data;
+};
+
+/**
  * 常用表达式
  * @returns
  */

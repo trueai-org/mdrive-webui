@@ -228,6 +228,10 @@ function App() {
       label: "继续",
     },
     {
+      key: JobState.Initializing,
+      label: "初始化",
+    },
+    {
       key: JobState.BackingUp,
       label: "执行",
     },
@@ -255,9 +259,9 @@ function App() {
   const getMenuItems = (stateValue: JobState) => {
     switch (stateValue) {
       case JobState.None:
-        return menuItems.filter((x) => x?.key == JobState.Paused);
+        return menuItems.filter((x) => x?.key == JobState.Initializing);
       case JobState.Initializing:
-        return menuItems.filter((x) => x?.key == JobState.Paused);
+        return [];
       case JobState.Idle:
         return menuItems.filter(
           (x) =>
@@ -295,7 +299,8 @@ function App() {
           (x) =>
             x?.key == JobState.BackingUp ||
             x?.key == JobState.Disabled ||
-            x?.key == JobState.Deleted
+            x?.key == JobState.Deleted ||
+            x?.key == JobState.Initializing
         );
       case JobState.Cancelling:
         return menuItems.filter((x) => x?.key == JobState.Paused);
@@ -304,14 +309,18 @@ function App() {
           (x) =>
             x?.key == JobState.BackingUp ||
             x?.key == JobState.Disabled ||
-            x?.key == JobState.Deleted
+            x?.key == JobState.Deleted ||
+            x?.key == JobState.Initializing
         );
       case JobState.Disabled:
         return menuItems.filter(
-          (x) => x?.key == JobState.None || x?.key == JobState.Deleted
+          (x) =>
+            x?.key == JobState.None ||
+            x?.key == JobState.Deleted ||
+            x?.key == JobState.Initializing
         );
       default:
-        return menuItems.filter((x) => x?.key == JobState.Paused);
+        return [];
     }
     return [];
   };

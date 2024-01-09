@@ -11,10 +11,18 @@ import {
   message,
   TreeSelect,
   TreeSelectProps,
+  AutoComplete,
+  Divider,
 } from "antd";
 import { FolderTwoTone, HomeTwoTone, UserOutlined } from "@ant-design/icons";
 import { IDriveJob } from "@/api/model";
-import { getCronTags, getPaths } from "@/api";
+import {
+  getCronTags,
+  getPaths,
+  getPoints,
+  updateSetMount,
+  updateSetUnmount,
+} from "@/api";
 import { DefaultOptionType } from "antd/es/select";
 
 const { Step } = Steps;
@@ -38,6 +46,8 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
   const [allStepsData, setAllStepsData] = useState<IDriveJob>();
   const [saveing, setSaveing] = useState(false);
   const [cronTags, setCronTags] = useState<string[]>([]);
+  const [pointOptions, setPointOptions] = useState<{ value: string }[]>([]);
+  const [point, setPoint] = useState<string>();
 
   useEffect(() => {
     getCronTags().then((res) => {
@@ -115,6 +125,15 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
         setPaths(rs);
       }
     });
+    getPoints().then((res) => {
+      if (res.success) {
+        setPointOptions(
+          res.data?.map((x) => {
+            return { value: x };
+          }) || []
+        );
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -124,6 +143,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
       setAllStepsData(jobConfig);
       form.setFieldsValue(jobConfig);
       setValue(jobConfig.sources || []);
+      setPoint(jobConfig.mountPoint);
     }
   }, [visible, jobConfig, form]);
 
@@ -258,6 +278,46 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
     }
   };
 
+  const onMount = () => {
+    if (!jobConfig.id) {
+      message.error("保存作业后才能执行挂载磁盘");
+      return;
+    }
+
+    if (!point) {
+      message.error("请选择或输入挂载点");
+      return;
+    }
+
+    setSaveing(true);
+    updateSetMount(jobConfig.id, point)
+      .then((res) => {
+        if (res.success) message.success("操作成功");
+        else message.error(res.message || "操作失败");
+      })
+      .finally(() => setSaveing(false));
+  };
+
+  const onUnmount = () => {
+    if (!jobConfig.id) {
+      message.error("保存作业后才能执行挂载磁盘");
+      return;
+    }
+
+    if (!point) {
+      message.error("请选择或输入挂载点");
+      return;
+    }
+
+    setSaveing(true);
+    updateSetUnmount(jobConfig.id)
+      .then((res) => {
+        if (res.success) message.success("操作成功");
+        else message.error(res.message || "操作失败");
+      })
+      .finally(() => setSaveing(false));
+  };
+
   return (
     <Modal
       title="作业配置"
@@ -291,6 +351,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
         <Step title="基本信息" />
         <Step title="作业配置" />
         <Step title="高级设置" />
+        <Step title="挂载配置" />
       </Steps>
 
       <Form form={form} labelCol={{ span: 6 }} wrapperCol={{ span: 18 }}>
@@ -446,6 +507,22 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
             >
               <Checkbox />
             </Form.Item>
+            <Form.Item
+              name="isRecycleBin"
+              label="启用回收站"
+              tooltip="是否启用回收站，如果启用则删除文件时，保留到回收站"
+              valuePropName="checked"
+            >
+              <Checkbox />
+            </Form.Item>
+            <Form.Item
+              name="isTemporary"
+              label="立即执行"
+              tooltip="表示是否启动后立即执行作业，如果是一次性作业，请选择立即执行"
+              valuePropName="checked"
+            >
+              <Checkbox />
+            </Form.Item>
           </>
         )}
         {currentStep == 2 && (
@@ -487,22 +564,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
             <Form.Item name="order" label="显示顺序" tooltip="作业显示顺序">
               <InputNumber min={0} />
             </Form.Item>
-            <Form.Item
-              name="isTemporary"
-              label="立即执行"
-              tooltip="是否为临时作业，也表示是否立即执行作业"
-              valuePropName="checked"
-            >
-              <Checkbox />
-            </Form.Item>
-            <Form.Item
-              name="isRecycleBin"
-              label="启用回收站"
-              tooltip="是否启用回收站，如果启用则删除文件时，保留到回收站"
-              valuePropName="checked"
-            >
-              <Checkbox />
-            </Form.Item>
+
             <Form.Item
               name="uploadThread"
               label="上传并行任务数"
@@ -519,6 +581,83 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
             </Form.Item>
           </>
         )}
+        {currentStep == 3 && (
+          <>
+            <Form.Item
+              name="mountPoint"
+              tooltip="云盘挂载到本地磁盘的位置"
+              label="挂载点"
+              help={
+                <span>
+                  如果你想将云盘的备份目录挂载到本地磁盘，像访问本地磁盘一样访问云盘，请设置挂载到磁盘的位置。
+                  <br />
+                  确保挂载的磁盘盘符没有被占用，Linux 确保是空的文件夹。
+                  <br />
+                  windows 示例：C:\，linux 示例：/tmp。
+                  <br />
+                  <span>
+                    请确保已安装磁盘驱动，下载驱动：
+                    <a href="/driver/Dokan_x64.msi" target="_blank">
+                      Windows_x64.msi
+                    </a>
+                    <Divider type="vertical" />
+                    <a href="/driver/Dokan_x86.msi" target="_blank">
+                      Windows_x86.msi
+                    </a>
+                  </span>
+                </span>
+              }
+            >
+              <AutoComplete
+                options={pointOptions}
+                placeholder="请输入或选择挂载点"
+                value={point}
+                onChange={setPoint}
+              />
+              {jobConfig.id && (
+                <div className="flex flex-row items-center py-2">
+                  {jobConfig.isMount ? (
+                    <div className="flex flex-row items-center">
+                      <span className="text-green-400">当前已挂载磁盘</span>
+                      <Divider type="vertical" className="ml-4" />
+                      <Button
+                        loading={saveing}
+                        size="small"
+                        type="link"
+                        onClick={onUnmount}
+                      >
+                        卸载挂载
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-row items-center">
+                      <span className="text-gray-400">
+                        当前未挂载到本地磁盘
+                      </span>
+                      <Divider type="vertical" className="ml-4" />
+                      <Button
+                        loading={saveing}
+                        size="small"
+                        type="link"
+                        onClick={onMount}
+                      >
+                        立即挂载
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </Form.Item>
+            <Form.Item
+              name="mountOnStartup"
+              label="自动挂载"
+              tooltip="作业启动后，立即挂在磁盘"
+              valuePropName="checked"
+            >
+              <Checkbox />
+            </Form.Item>
+          </>
+        )}
       </Form>
 
       <div className="pt-3 items-center justify-center w-full flex">
@@ -527,7 +666,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
             上一步
           </Button>
         )}
-        {currentStep < 2 && (
+        {currentStep < 3 && (
           <Button ghost type="primary" onClick={() => next()}>
             下一步
           </Button>

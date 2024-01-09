@@ -584,7 +584,6 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
         {currentStep == 3 && (
           <>
             <Form.Item
-              name="mountPoint"
               tooltip="云盘挂载到本地磁盘的位置"
               label="挂载点"
               help={
@@ -612,7 +611,15 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
                 options={pointOptions}
                 placeholder="请输入或选择挂载点"
                 value={point}
-                onChange={setPoint}
+                onChange={(v) => {
+                  setPoint(v);
+                  setAllStepsData((prev) => {
+                    if (prev) {
+                      prev.mountPoint = v;
+                    }
+                    return prev;
+                  });
+                }}
               />
               {jobConfig.id && (
                 <div className="flex flex-row items-center py-2">

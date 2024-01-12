@@ -111,21 +111,25 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
   };
 
   return (
-    <div>
+    <>
       {isAdd ? (
-        <Button
-          type="link"
-          size="small"
-          icon={<PlusOutlined />}
-          onClick={showModal}
-        ></Button>
+        // <Button
+        //   type="link"
+        //   size="small"
+        //   icon={<PlusOutlined />}
+        //   onClick={showModal}
+        // ></Button>
+
+        <PlusOutlined onClick={showModal} />
       ) : (
-        <Button
-          type="link"
-          size="small"
-          icon={<EditOutlined />}
-          onClick={showModal}
-        ></Button>
+        // <Button
+        //   type="link"
+        //   size="small"
+        //   icon={<EditOutlined />}
+        //   onClick={showModal}
+        // ></Button>
+
+        <EditOutlined onClick={showModal} />
       )}
 
       <Modal
@@ -186,7 +190,7 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
           </div>
         </Spin>
       </Modal>
-    </div>
+    </>
   );
 };
 

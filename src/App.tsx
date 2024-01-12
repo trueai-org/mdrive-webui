@@ -9,7 +9,6 @@ import {
   Switch,
   Table,
   Tag,
-  Tooltip,
   Tour,
   TourProps,
   message,
@@ -33,7 +32,6 @@ import {
   FileImageTwoTone,
   FileOutlined,
   DownloadOutlined,
-  PlusOutlined,
 } from "@ant-design/icons";
 import { format } from "date-fns";
 import { ColumnsType } from "antd/es/table";
@@ -794,19 +792,38 @@ function App() {
                   }
                   toolBarRender={() => {
                     return [
-                      <Tooltip title="添加作业">
-                        <Button
-                          type="link"
-                          size="small"
-                          icon={<PlusOutlined />}
-                          onClick={() => onJobAdd(c.id)}
-                        ></Button>
-                      </Tooltip>,
-                      <OAuthComponent
-                        drive={c}
-                        onDelete={() => onDriveDelete(c.id)}
-                        onOk={(tk) => onDriveSave(tk, c.id)}
-                      />,
+                      // <Tooltip title="添加作业">
+                      //   <Button
+                      //     type="link"
+                      //     size="small"
+                      //     icon={<PlusOutlined />}
+                      //     onClick={() => onJobAdd(c.id)}
+                      //   ></Button>
+                      // </Tooltip>,
+
+                      <Dropdown.Button
+                        menu={{
+                          items: [
+                            {
+                              key: "add",
+                              label: "添加作业",
+                            },
+                          ],
+                          onClick: (e) => {
+                            if (e.key == "add") {
+                              onJobAdd(c.id);
+                            }
+                          },
+                        }}
+                        size="small"
+                        className="mr-2"
+                      >
+                        <OAuthComponent
+                          drive={c}
+                          onDelete={() => onDriveDelete(c.id)}
+                          onOk={(tk) => onDriveSave(tk, c.id)}
+                        />
+                      </Dropdown.Button>,
                     ];
                   }}
                   // expandable={{

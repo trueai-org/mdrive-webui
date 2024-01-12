@@ -14,11 +14,7 @@ export default {
         name: "欢迎",
         icon: <SmileFilled />,
       },
-      {
-        path: "https://github.com/trueai-org/MDriveSync",
-        name: "官网",
-        icon: <GithubFilled />,
-      },
+
       {
         path: "/setting",
         name: "设置",
@@ -28,6 +24,11 @@ export default {
         path: "/about",
         name: "关于",
         icon: <InfoCircleFilled />,
+      },
+      {
+        path: "https://github.com/trueai-org/MDriveSync",
+        name: "官网",
+        icon: <GithubFilled />,
       },
     ],
   },

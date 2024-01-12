@@ -41,6 +41,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
   onCancel,
   jobConfig,
 }) => {
+
   const [form] = Form.useForm<IDriveJob>();
   const [currentStep, setCurrentStep] = useState(0);
   const [allStepsData, setAllStepsData] = useState<IDriveJob>();
@@ -461,8 +462,8 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
               tooltip="阿里云盘的存储位置，个人私有文件建议存储到备份盘"
             >
               <Select>
-                <Select.Option value="resource">资源库</Select.Option>
                 <Select.Option value="backup">备份盘</Select.Option>
+                <Select.Option value="resource">资源库</Select.Option>
               </Select>
             </Form.Item>
             <Form.Item
@@ -658,7 +659,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
             <Form.Item
               name="mountOnStartup"
               label="自动挂载"
-              tooltip="作业启动后，立即挂在磁盘"
+              tooltip="作业启动后，立即挂载磁盘"
               valuePropName="checked"
             >
               <Checkbox />

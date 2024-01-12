@@ -1,6 +1,7 @@
 import { Key } from "react";
 
 export interface IDrive {
+  
   id: string;
   name: string;
   tokenType: string;
@@ -9,6 +10,14 @@ export interface IDrive {
   expiresIn: number;
   metadata: IDriveMetadata;
   jobs: IDriveJob[];
+
+  isMount?: boolean;
+  mountReadOnly?: boolean;
+  mountDrive?: string;
+  isRecycleBin?: string;
+  mountPath?: string;
+  mountOnStartup?: boolean;
+  mountPoint?: string;
 
   // 前台字段
   expandedRowKeys?: Key[];

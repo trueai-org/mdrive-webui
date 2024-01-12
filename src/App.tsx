@@ -753,7 +753,7 @@ function App() {
           title={<div className="font-bold">存储和作业</div>}
           colSpan={"432px"}
           ref={welRef1}
-          extra={<OAuthComponent onOk={(tk) => onDriveSave(tk)} isAdd />}
+          extra={<OAuthComponent isAdd onOk={(tk) => onDriveSave(tk)} />}
         >
           {drives &&
             drives?.map((c, i) => {
@@ -792,38 +792,12 @@ function App() {
                   }
                   toolBarRender={() => {
                     return [
-                      // <Tooltip title="添加作业">
-                      //   <Button
-                      //     type="link"
-                      //     size="small"
-                      //     icon={<PlusOutlined />}
-                      //     onClick={() => onJobAdd(c.id)}
-                      //   ></Button>
-                      // </Tooltip>,
-
-                      <Dropdown.Button
-                        menu={{
-                          items: [
-                            {
-                              key: "add",
-                              label: "添加作业",
-                            },
-                          ],
-                          onClick: (e) => {
-                            if (e.key == "add") {
-                              onJobAdd(c.id);
-                            }
-                          },
-                        }}
-                        size="small"
-                        className="mr-2"
-                      >
-                        <OAuthComponent
-                          drive={c}
-                          onDelete={() => onDriveDelete(c.id)}
-                          onOk={(tk) => onDriveSave(tk, c.id)}
-                        />
-                      </Dropdown.Button>,
+                      <OAuthComponent
+                        drive={c}
+                        onDelete={() => onDriveDelete(c.id)}
+                        onOk={(tk) => onDriveSave(tk, c.id)}
+                        onJobAdd={() => onJobAdd(c.id)}
+                      />,
                     ];
                   }}
                   // expandable={{

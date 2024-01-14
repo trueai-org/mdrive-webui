@@ -36,7 +36,7 @@ export const getJobs = async () => {
  * @returns
  */
 export const updateSetMount = async (jobId: string, mountPoint: string) => {
-  const response = await api.post<IResult>(`/api/drive/mount/${jobId}`, {
+  const response = await api.post<IResult>(`/api/drive/job/mount/${jobId}`, {
     mountPoint: mountPoint,
   });
   return response.data;
@@ -49,7 +49,31 @@ export const updateSetMount = async (jobId: string, mountPoint: string) => {
  * @returns
  */
 export const updateSetUnmount = async (jobId: string) => {
-  const response = await api.post<IResult>(`/api/drive/unmount/${jobId}`);
+  const response = await api.post<IResult>(`/api/drive/job/unmount/${jobId}`);
+  return response.data;
+};
+
+
+
+/**
+ * 云盘挂载
+ * @param jobId
+ * @param mountPoint
+ * @returns
+ */
+export const updateSetDriveMount = async (driveId: string) => {
+  const response = await api.post<IResult>(`/api/drive/mount/${driveId}`);
+  return response.data;
+};
+
+/**
+ * 云盘取消挂载
+ * @param jobId
+ * @param mountPoint
+ * @returns
+ */
+export const updateSetDriveUnmount = async (driveId: string) => {
+  const response = await api.post<IResult>(`/api/drive/unmount/${driveId}`);
   return response.data;
 };
 
@@ -145,10 +169,8 @@ export const getFile = async (jobId: string, fileId: string) => {
  * @param driveId
  * @returns
  */
-export const updateDrive = async (driveId: string, token: string) => {
-  const response = await api.put<IResult>(`/api/drive/${driveId}`, {
-    refreshToken: token,
-  });
+export const updateDrive = async (driveId: string, data: any) => {
+  const response = await api.put<IResult>(`/api/drive/${driveId}`, data);
   return response.data;
 };
 
@@ -157,10 +179,8 @@ export const updateDrive = async (driveId: string, token: string) => {
  * @param token
  * @returns
  */
-export const addDrive = async (token: string) => {
-  const response = await api.post<IResult>(`/api/drive`, {
-    refreshToken: token,
-  });
+export const addDrive = async (data: any) => {
+  const response = await api.post<IResult>(`/api/drive`, data);
   return response.data;
 };
 

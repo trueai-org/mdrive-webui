@@ -17,7 +17,14 @@ import {
 import fetchJsonp from "fetch-jsonp";
 import { PlusOutlined, EditOutlined } from "@ant-design/icons";
 import { IDrive } from "@/api/model";
-import { getPoints } from "@/api";
+import {
+  addDrive,
+  deleteDrive,
+  getPoints,
+  updateDrive,
+  updateSetDriveMount,
+  updateSetDriveUnmount,
+} from "@/api";
 
 interface OAuthComponentProps {
   isAdd?: boolean;
@@ -25,9 +32,8 @@ interface OAuthComponentProps {
   redirectUri?: string;
   drive?: IDrive;
   onClose?: () => void;
-  onDelete?: () => Promise<void>;
   onJobAdd?: () => void;
-  onOk?: (token: string) => Promise<void>;
+  onOk?: () => void;
 }
 
 const { Step } = Steps;
@@ -38,7 +44,6 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
   onClose,
   isAdd,
   drive: driveInfo,
-  onDelete,
   onOk,
   onJobAdd,
 }) => {
@@ -61,7 +66,7 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
 
   useEffect(() => {
     if (isModalVisible) {
-      setCurrentStep(0);
+      // setCurrentStep(0);
       setOauthCreateToken(
         Math.random().toString(36).substr(2) +
           Math.random().toString(36).substr(2)
@@ -139,19 +144,6 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
     onClose && onClose();
   }, [onClose]);
 
-  // 保存
-  const onSave = async () => {
-    if (!token) {
-      message.error("请授权");
-      return;
-    }
-
-    setSaveing(true);
-    onOk && (await onOk(token));
-    setSaveing(false);
-    hideModal();
-  };
-
   const next = () => {
     form
       .validateFields()
@@ -176,77 +168,127 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
       });
   };
 
-  const onMount = () => {
-    // if (!jobConfig.id) {
-    //   message.error("保存作业后才能执行挂载磁盘");
-    //   return;
-    // }
-    // if (!point) {
-    //   message.error("请选择或输入挂载点");
-    //   return;
-    // }
-    // setSaveing(true);
-    // updateSetMount(jobConfig.id, point)
-    //   .then((res) => {
-    //     if (res.success) message.success("操作成功");
-    //     else message.error(res.message || "操作失败");
-    //   })
-    //   .finally(() => setSaveing(false));
+  const onMount = async () => {
+    if (!driveInfo || !driveInfo.id) {
+      message.error("保存云盘后才能执行挂载磁盘");
+      return;
+    }
+    if (!point) {
+      message.error("请选择或输入挂载点");
+      return;
+    }
+
+    setSaveing(true);
+
+    // 先保存配置
+    form
+      .validateFields()
+      .then(async (data) => {
+        data.refreshToken = token;
+        data.mountPoint = point;
+        if (driveInfo) {
+          const res = await updateDrive(driveInfo.id, data);
+          if (res?.success) {
+            // 然后挂载
+            const r2 = await updateSetDriveMount(driveInfo.id);
+            if (r2.success) {
+              message.success("操作成功");
+              onOk && onOk();
+              hideModal();
+            } else {
+              message.error(r2.message || "操作失败");
+            }
+            setSaveing(false);
+          } else {
+            message.error(res?.message || "操作失败");
+          }
+        }
+      })
+      .catch((errorInfo) => {
+        message.error(errorInfo?.errorFields[0].errors[0]);
+      })
+      .finally(() => {
+        setSaveing(false);
+      });
   };
 
   const onUnmount = () => {
-    // if (!jobConfig.id) {
-    //   message.error("保存作业后才能执行挂载磁盘");
-    //   return;
-    // }
-    // if (!point) {
-    //   message.error("请选择或输入挂载点");
-    //   return;
-    // }
-    // setSaveing(true);
-    // updateSetUnmount(jobConfig.id)
-    //   .then((res) => {
-    //     if (res.success) message.success("操作成功");
-    //     else message.error(res.message || "操作失败");
-    //   })
-    //   .finally(() => setSaveing(false));
+    if (!driveInfo || !driveInfo.id) {
+      message.error("保存云盘后才能执行挂载磁盘");
+      return;
+    }
+    setSaveing(true);
+    updateSetDriveUnmount(driveInfo.id)
+      .then((res) => {
+        if (res.success) {
+          message.success("操作成功");
+          onOk && onOk();
+          hideModal();
+        } else message.error(res.message || "操作失败");
+      })
+      .finally(() => setSaveing(false));
   };
 
-  // /**
-  //  * 删除云盘
-  //  */
-  // const onDriveDelete = async (driveId: string) => {
-  //   const res = await deleteDrive(driveId);
-  //   if (res?.success) {
-  //     message.success("操作成功");
-  //     // loadDrives();
-  //   } else {
-  //     message.error(res?.message || "操作失败");
-  //   }
-  // };
+  /**
+   * 保存云盘
+   */
+  const onDriveSave = async () => {
+    if (!token) {
+      message.error("请授权");
+      return;
+    }
 
-  // /**
-  //  * 保存云盘
-  //  */
-  // const onDriveSave = async (token: string, driveId?: string) => {
-  //   if (driveId) {
-  //     const res = await updateDrive(driveId, token);
-  //     if (res?.success) {
-  //       message.success("保存成功");
-  //       // loadDrives();
-  //     } else {
-  //       message.error(res?.message || "操作失败");
-  //     }
-  //   } else {
-  //     const res = await addDrive(token);
-  //     if (res?.success) {
-  //       message.success("保存成功");
-  //       // loadDrives();
-  //     } else {
-  //       message.error(res?.message || "操作失败");
-  //     }
-  //   }
-  // };
+    setSaveing(true);
+    form
+      .validateFields()
+      .then(async (data) => {
+        data.refreshToken = token;
+        data.mountPoint = point;
+        if (driveInfo) {
+          const res = await updateDrive(driveInfo.id, data);
+          if (res?.success) {
+            message.success("保存成功");
+            onOk && onOk();
+            setSaveing(false);
+            hideModal();
+          } else {
+            message.error(res?.message || "操作失败");
+          }
+        } else {
+          const res = await addDrive(data);
+          if (res?.success) {
+            message.success("保存成功");
+            onOk && onOk();
+            setSaveing(false);
+            hideModal();
+          } else {
+            message.error(res?.message || "操作失败");
+          }
+        }
+      })
+      .catch((errorInfo) => {
+        message.error(errorInfo?.errorFields[0].errors[0]);
+      })
+      .finally(() => {
+        setSaveing(false);
+      });
+  };
+
+  /**
+   * 删除云盘
+   */
+  const onDriveDelete = async () => {
+    if (driveInfo) {
+      const res = await deleteDrive(driveInfo.id);
+      if (res?.success) {
+        message.success("操作成功");
+        hideModal();
+        onOk && onOk();
+      } else {
+        message.error(res?.message || "操作失败");
+      }
+    }
+  };
 
   return (
     <>
@@ -281,52 +323,8 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
           showModal();
         }}
       >
-        {isAdd ? (
-          // <Button
-          //   type="link"
-          //   size="small"
-          //   icon={<PlusOutlined />}
-          //   onClick={showModal}
-          // ></Button>
-
-          <PlusOutlined />
-        ) : (
-          // <Button
-          //   type="link"
-          //   size="small"
-          //   icon={<EditOutlined />}
-          //   onClick={showModal}
-          // ></Button>
-
-          <EditOutlined />
-        )}
-
-        {/* <OAuthComponent
-          drive={c}
-          onDelete={() => onDriveDelete(c.id)}
-          onOk={(tk) => onDriveSave(tk, c.id)}
-        /> */}
+        {isAdd ? <PlusOutlined /> : <EditOutlined />}
       </Dropdown.Button>
-
-      {/* {isAdd ? (
-        // <Button
-        //   type="link"
-        //   size="small"
-        //   icon={<PlusOutlined />}
-        //   onClick={showModal}
-        // ></Button>
-
-        <PlusOutlined onClick={showModal} />
-      ) : (
-        // <Button
-        //   type="link"
-        //   size="small"
-        //   icon={<EditOutlined />}
-        //   onClick={showModal}
-        // ></Button>
-
-        <EditOutlined onClick={showModal} />
-      )} */}
 
       <Modal
         title="阿里云盘授权"
@@ -335,7 +333,12 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
         width={760}
         footer={
           <div>
-            <Button loading={saveing} onClick={onSave} type="primary">
+            <Button
+              disabled={driveInfo?.isMount}
+              loading={saveing}
+              onClick={onDriveSave}
+              type="primary"
+            >
               保存
             </Button>
             <Button onClick={hideModal} type="default">
@@ -348,7 +351,6 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
           <Steps
             className="py-3"
             onChange={(e) => {
-              // updateStepData();
               setCurrentStep(e);
             }}
             current={currentStep}
@@ -358,7 +360,12 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
             <Step title="云盘挂载" />
           </Steps>
 
-          <Form form={form} labelCol={{ span: 4 }} wrapperCol={{ span: 18 }}>
+          <Form
+            disabled={driveInfo?.isMount}
+            form={form}
+            labelCol={{ span: 4 }}
+            wrapperCol={{ span: 18 }}
+          >
             {currentStep == 0 && (
               <>
                 <Form.Item
@@ -382,10 +389,7 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
                     <Popconfirm
                       title="解除授权令牌？"
                       description="解除授权将会同时删除当前云盘下的所有作业"
-                      onConfirm={async () => {
-                        onDelete && (await onDelete());
-                        hideModal();
-                      }}
+                      onConfirm={onDriveDelete}
                       okText="确认"
                       cancelText="取消"
                       placement="topLeft"
@@ -444,12 +448,16 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
                       {drive.isMount ? (
                         <div className="flex flex-row items-center">
                           <span className="text-green-400">当前已挂载磁盘</span>
+                          <span className="text-gray-400">
+                            （挂载中不可修改配置）
+                          </span>
                           <Divider type="vertical" className="ml-4" />
                           <Button
                             loading={saveing}
                             size="small"
                             type="link"
                             onClick={onUnmount}
+                            disabled={false}
                           >
                             卸载挂载
                           </Button>

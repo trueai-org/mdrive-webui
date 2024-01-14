@@ -37,15 +37,12 @@ import { format } from "date-fns";
 import { ColumnsType } from "antd/es/table";
 
 import {
-  addDrive,
   addJob,
-  deleteDrive,
   getDownloadFile,
   getDriveFiles,
   getDrives,
   getFile,
   getJobs,
-  updateDrive,
   updateJob,
   updateJobState,
 } from "./api";
@@ -508,42 +505,6 @@ function App() {
     setVisibleEditJob(false);
   };
 
-  /**
-   * 删除云盘
-   */
-  const onDriveDelete = async (driveId: string) => {
-    const res = await deleteDrive(driveId);
-    if (res?.success) {
-      message.success("操作成功");
-      loadDrives();
-    } else {
-      message.error(res?.message || "操作失败");
-    }
-  };
-
-  /**
-   * 保存云盘
-   */
-  const onDriveSave = async (token: string, driveId?: string) => {
-    if (driveId) {
-      const res = await updateDrive(driveId, token);
-      if (res?.success) {
-        message.success("保存成功");
-        loadDrives();
-      } else {
-        message.error(res?.message || "操作失败");
-      }
-    } else {
-      const res = await addDrive(token);
-      if (res?.success) {
-        message.success("保存成功");
-        loadDrives();
-      } else {
-        message.error(res?.message || "操作失败");
-      }
-    }
-  };
-
   const colors = [
     {
       label: "天蓝",
@@ -753,7 +714,7 @@ function App() {
           title={<div className="font-bold">存储和作业</div>}
           colSpan={"432px"}
           ref={welRef1}
-          extra={<OAuthComponent isAdd onOk={(tk) => onDriveSave(tk)} />}
+          extra={<OAuthComponent isAdd onOk={loadDrives} />}
         >
           {drives &&
             drives?.map((c, i) => {
@@ -794,8 +755,7 @@ function App() {
                     return [
                       <OAuthComponent
                         drive={c}
-                        onDelete={() => onDriveDelete(c.id)}
-                        onOk={(tk) => onDriveSave(tk, c.id)}
+                        onOk={loadDrives}
                         onJobAdd={() => onJobAdd(c.id)}
                       />,
                     ];

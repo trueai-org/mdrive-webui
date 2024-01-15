@@ -192,7 +192,7 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
             // 然后挂载
             const r2 = await updateSetDriveMount(driveInfo.id);
             if (r2.success) {
-              message.success("操作成功");
+              message.success("挂载成功，首次初始化列表需要1~5分钟，请耐心等待");
               onOk && onOk();
               hideModal();
             } else {

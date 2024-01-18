@@ -81,6 +81,17 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
           );
         }
       });
+
+      if (driveInfo) {
+        driveInfo.isRecycleBin = driveInfo.mountConfig?.isRecycleBin;
+        driveInfo.mountDrive = driveInfo.mountConfig?.mountDrive;
+        driveInfo.mountPath = driveInfo.mountConfig?.mountPath;
+        driveInfo.mountPoint = driveInfo.mountConfig?.mountPoint;
+        driveInfo.mountReadOnly = driveInfo.mountConfig?.mountReadOnly;
+        driveInfo.mountOnStartup = driveInfo.mountConfig?.mountOnStartup;
+        driveInfo.rapidUpload = driveInfo.mountConfig?.rapidUpload;
+      }
+
       setDrive(driveInfo);
       setPoint(driveInfo?.mountPoint);
       if (form && driveInfo) {
@@ -186,13 +197,24 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
       .then(async (data) => {
         data.refreshToken = token;
         data.mountPoint = point;
+        data.mountConfig = {
+          isRecycleBin: data.isRecycleBin,
+          mountDrive: data.mountDrive,
+          mountPath: data.mountPath,
+          mountPoint: data.mountPoint,
+          mountReadOnly: data.mountReadOnly,
+          mountOnStartup: data.mountOnStartup,
+          rapidUpload: data.rapidUpload,
+        };
         if (driveInfo) {
           const res = await updateDrive(driveInfo.id, data);
           if (res?.success) {
             // 然后挂载
             const r2 = await updateSetDriveMount(driveInfo.id);
             if (r2.success) {
-              message.success("挂载成功，首次初始化列表需要1~5分钟，请耐心等待");
+              message.success(
+                "挂载成功，首次初始化列表需要1~5分钟，请耐心等待"
+              );
               onOk && onOk();
               hideModal();
             } else {
@@ -244,6 +266,16 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
       .then(async (data) => {
         data.refreshToken = token;
         data.mountPoint = point;
+        data.mountConfig = {
+          isRecycleBin: data.isRecycleBin,
+          mountDrive: data.mountDrive,
+          mountPath: data.mountPath,
+          mountPoint: data.mountPoint,
+          mountReadOnly: data.mountReadOnly,
+          mountOnStartup: data.mountOnStartup,
+          rapidUpload: data.rapidUpload,
+        };
+
         if (driveInfo) {
           const res = await updateDrive(driveInfo.id, data);
           if (res?.success) {

@@ -41,7 +41,6 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
   onCancel,
   jobConfig,
 }) => {
-
   const [form] = Form.useForm<IDriveJob>();
   const [currentStep, setCurrentStep] = useState(0);
   const [allStepsData, setAllStepsData] = useState<IDriveJob>();
@@ -141,6 +140,13 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
     if (form && visible) {
       setCurrentStep(0);
       setShowTreeSelect(true);
+
+      if (jobConfig) {
+        jobConfig.mountOnStartup = jobConfig.mountConfig?.mountOnStartup;
+        jobConfig.mountPoint = jobConfig.mountConfig?.mountPoint;
+        jobConfig.mountReadOnly = jobConfig.mountConfig?.mountReadOnly;
+      }
+
       setAllStepsData(jobConfig);
       form.setFieldsValue(jobConfig);
       setValue(jobConfig.sources || []);
@@ -184,7 +190,39 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
       .validateFields()
       .then((values) => {
         const value: IDriveJob = { ...allStepsData, ...values };
+
+        value.mountConfig = {
+          mountPoint: value.mountPoint,
+          mountReadOnly: value.mountReadOnly,
+          mountOnStartup: value.mountOnStartup,
+        };
+
         setAllStepsData(value);
+
+        // if (value.id) {
+        //   // 编辑
+        //   updateJob(value).then((res) => {
+        //     if (res?.success) {
+        //       message.success("操作成功");
+        //       setVisibleEditJob(false);
+        //       loadDrives();
+        //     } else {
+        //       message.error(res?.message || "操作失败");
+        //     }
+        //   });
+        // } else {
+        //   // 新增
+        //   addJob(currentDriveId!, value).then((res) => {
+        //     if (res?.success) {
+        //       message.success("操作成功");
+        //       setVisibleEditJob(false);
+        //       loadDrives();
+        //     } else {
+        //       message.error(res?.message || "操作失败");
+        //     }
+        //   });
+        // }
+
         onOk && onOk(value);
       })
       .catch((errorInfo) => {
@@ -660,6 +698,14 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
               name="mountOnStartup"
               label="自动挂载"
               tooltip="作业启动后，立即挂载磁盘"
+              valuePropName="checked"
+            >
+              <Checkbox />
+            </Form.Item>
+            <Form.Item
+              name="mountReadOnly"
+              label="只读模式"
+              tooltip="以只读模式挂载阿里云盘时，无法对文件修改删除等"
               valuePropName="checked"
             >
               <Checkbox />

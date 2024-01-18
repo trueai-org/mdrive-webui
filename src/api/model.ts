@@ -9,18 +9,32 @@ export interface IDrive {
   refreshToken: string;
   expiresIn: number;
   metadata: IDriveMetadata;
+  mountConfig: IDriveMountConfig;
   jobs: IDriveJob[];
 
   isMount?: boolean;
+
+  // 前台字段
+
   mountReadOnly?: boolean;
   mountDrive?: string;
   isRecycleBin?: string;
   mountPath?: string;
   mountOnStartup?: boolean;
   mountPoint?: string;
+  rapidUpload?: boolean;
 
-  // 前台字段
   expandedRowKeys?: Key[];
+}
+
+export interface IDriveMountConfig {
+  mountReadOnly?: boolean;
+  mountDrive?: string;
+  isRecycleBin?: string;
+  mountPath?: string;
+  mountOnStartup?: boolean;
+  mountPoint?: string;
+  rapidUpload?: boolean;
 }
 
 export interface IDriveJob {
@@ -45,9 +59,13 @@ export interface IDriveJob {
   isRecycleBin: boolean;
   uploadThread: number;
   downloadThread: number;
-  mountPoint?: string;
-  mountOnStartup?: boolean;
   metadata?: IJobMetadata;
+  mountConfig?: IDriveMountConfig;
+
+  // 前台展示
+  mountReadOnly?: boolean;
+  mountOnStartup?: boolean;
+  mountPoint?: string;
 }
 
 export interface IJobMetadata {

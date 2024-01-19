@@ -657,7 +657,7 @@ function App() {
             <a target="_blank" href="https://github.com/trueai-org/MDriveSync">
               MDrive
             </a>{" "}
-            v1.4.0 |{" "}
+            v1.5.0 |{" "}
             <a
               target="_blank"
               href="https://github.com/trueai-org/MDriveSyncWebUI"

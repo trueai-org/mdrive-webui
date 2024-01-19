@@ -39,7 +39,7 @@ interface OAuthComponentProps {
 const { Step } = Steps;
 
 const OAuthComponent: React.FC<OAuthComponentProps> = ({
-  clientId = "12561ebaf6504bea8a611932684c86f6",
+  clientId = "8dfd3cd56aa14e7d89bedcf975d388ce",
   redirectUri = "https://api.duplicati.net/api/open/aliyundrive",
   onClose,
   isAdd,

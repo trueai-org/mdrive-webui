@@ -35,10 +35,8 @@ export const getJobs = async () => {
  * @param mountPoint
  * @returns
  */
-export const updateSetMount = async (jobId: string, mountPoint: string) => {
-  const response = await api.post<IResult>(`/api/drive/job/mount/${jobId}`, {
-    mountPoint: mountPoint,
-  });
+export const updateSetMount = async (jobId: string) => {
+  const response = await api.post<IResult>(`/api/drive/job/mount/${jobId}`);
   return response.data;
 };
 

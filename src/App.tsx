@@ -35,27 +35,26 @@ import {
 } from "@ant-design/icons";
 import { format } from "date-fns";
 import { ColumnsType } from "antd/es/table";
+import { MenuInfo } from "rc-menu/lib/interface";
+import { Select } from "antd/lib";
+import { useQuery } from "@tanstack/react-query";
 
 import {
-  addJob,
   getDownloadFile,
   getDriveFiles,
   getDrives,
   getFile,
   getJobs,
-  updateJob,
   updateJobState,
 } from "./api";
+
 import { IDrive, IDriveFile, IDriveJob, JobState } from "./api/model";
 import { formatFileSize, getJobStateTag } from "./utils";
 import OAuthComponent from "./components/OAuthComponent";
 import JobEditModal from "./components/JobEditModal";
-import { MenuInfo } from "rc-menu/lib/interface";
 import defaultProps from "./_defaultProps";
 
 import "./App.css";
-import { Select } from "antd/lib";
-import { useQuery } from "@tanstack/react-query";
 
 function App() {
   const [pathname, setPathname] = useState("/");
@@ -470,32 +469,35 @@ function App() {
    * 作业保存
    * @param value
    */
-  const onJobSave = (value: IDriveJob) => {
-    if (value) {
-      if (value.id) {
-        // 编辑
-        updateJob(value).then((res) => {
-          if (res?.success) {
-            message.success("操作成功");
-            setVisibleEditJob(false);
-            loadDrives();
-          } else {
-            message.error(res?.message || "操作失败");
-          }
-        });
-      } else {
-        // 新增
-        addJob(currentDriveId!, value).then((res) => {
-          if (res?.success) {
-            message.success("操作成功");
-            setVisibleEditJob(false);
-            loadDrives();
-          } else {
-            message.error(res?.message || "操作失败");
-          }
-        });
-      }
-    }
+  const onJobSave = () => {
+    setVisibleEditJob(false);
+    loadDrives();
+
+    // if (value) {
+    //   if (value.id) {
+    //     // 编辑
+    //     updateJob(value).then((res) => {
+    //       if (res?.success) {
+    //         message.success("操作成功");
+    //         setVisibleEditJob(false);
+    //         loadDrives();
+    //       } else {
+    //         message.error(res?.message || "操作失败");
+    //       }
+    //     });
+    //   } else {
+    //     // 新增
+    //     addJob(currentDriveId!, value).then((res) => {
+    //       if (res?.success) {
+    //         message.success("操作成功");
+    //         setVisibleEditJob(false);
+    //         loadDrives();
+    //       } else {
+    //         message.error(res?.message || "操作失败");
+    //       }
+    //     });
+    //   }
+    // }
   };
 
   /**
@@ -604,6 +606,7 @@ function App() {
               ...job,
               state: updatedJob.state,
               metadata: updatedJob.metadata,
+              isMount: updatedJob.isMount,
             };
           }
           return job;
@@ -894,6 +897,7 @@ function App() {
         onOk={onJobSave}
         onCancel={onJobSaveCancel}
         jobConfig={currentEditJob!}
+        currentDriveId={currentDriveId}
       />
 
       <Modal

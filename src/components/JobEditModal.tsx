@@ -17,9 +17,11 @@ import {
 import { FolderTwoTone, HomeTwoTone, UserOutlined } from "@ant-design/icons";
 import { IDriveJob } from "@/api/model";
 import {
+  addJob,
   getCronTags,
   getPaths,
   getPoints,
+  updateJob,
   updateSetMount,
   updateSetUnmount,
 } from "@/api";
@@ -30,9 +32,11 @@ const { SHOW_PARENT } = TreeSelect;
 
 interface JobEditModalProps {
   visible: boolean;
-  onOk: (job: IDriveJob) => void;
+  // onOk: (job: IDriveJob) => void;
+  onOk: () => void;
   onCancel: () => void;
   jobConfig: IDriveJob;
+  currentDriveId?: string;
 }
 
 const JobEditModal: React.FC<JobEditModalProps> = ({
@@ -40,6 +44,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
   onOk,
   onCancel,
   jobConfig,
+  currentDriveId,
 }) => {
   const [form] = Form.useForm<IDriveJob>();
   const [currentStep, setCurrentStep] = useState(0);
@@ -199,31 +204,31 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
 
         setAllStepsData(value);
 
-        // if (value.id) {
-        //   // 编辑
-        //   updateJob(value).then((res) => {
-        //     if (res?.success) {
-        //       message.success("操作成功");
-        //       setVisibleEditJob(false);
-        //       loadDrives();
-        //     } else {
-        //       message.error(res?.message || "操作失败");
-        //     }
-        //   });
-        // } else {
-        //   // 新增
-        //   addJob(currentDriveId!, value).then((res) => {
-        //     if (res?.success) {
-        //       message.success("操作成功");
-        //       setVisibleEditJob(false);
-        //       loadDrives();
-        //     } else {
-        //       message.error(res?.message || "操作失败");
-        //     }
-        //   });
-        // }
-
-        onOk && onOk(value);
+        if (value.id) {
+          // 编辑
+          updateJob(value).then((res) => {
+            if (res?.success) {
+              message.success("操作成功");
+              // setVisibleEditJob(false);
+              // loadDrives();
+              onOk && onOk();
+            } else {
+              message.error(res?.message || "操作失败");
+            }
+          });
+        } else {
+          // 新增
+          addJob(currentDriveId!, value).then((res) => {
+            if (res?.success) {
+              message.success("操作成功");
+              // setVisibleEditJob(false);
+              // loadDrives();
+              onOk && onOk();
+            } else {
+              message.error(res?.message || "操作失败");
+            }
+          });
+        }
       })
       .catch((errorInfo) => {
         message.error(errorInfo?.errorFields[0].errors[0]);
@@ -329,12 +334,67 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
     }
 
     setSaveing(true);
-    updateSetMount(jobConfig.id, point)
-      .then((res) => {
-        if (res.success) message.success("操作成功");
-        else message.error(res.message || "操作失败");
+
+    form
+      .validateFields()
+      .then((values) => {
+        const value: IDriveJob = { ...allStepsData, ...values };
+
+        value.mountConfig = {
+          mountPoint: value.mountPoint,
+          mountReadOnly: value.mountReadOnly,
+          mountOnStartup: value.mountOnStartup,
+        };
+
+        setAllStepsData(value);
+
+        if (value.id) {
+          // 先保存作业
+          updateJob(value).then((res) => {
+            if (res?.success) {
+              // message.success("操作成功");
+              // setVisibleEditJob(false);
+              // loadDrives();
+
+              // 然后挂载磁盘
+              updateSetMount(jobConfig.id)
+                .then((res) => {
+                  if (res.success) {
+                    // message.success("操作成功");
+                    message.success(
+                      "挂载成功，首次初始化列表需要1~5分钟，请耐心等待"
+                    );
+                    onOk && onOk();
+                  } else {
+                    message.error(res.message || "操作失败");
+                  }
+                })
+                .finally(() => setSaveing(false));
+            } else {
+              message.error(res?.message || "操作失败");
+              setSaveing(false);
+            }
+          });
+        } else {
+          // 新增
+          addJob(currentDriveId!, value)
+            .then((res) => {
+              if (res?.success) {
+                message.warning("添加作业成功，请重新设置挂载");
+                // setVisibleEditJob(false);
+                // loadDrives();
+                onOk && onOk();
+              } else {
+                message.error(res?.message || "操作失败");
+              }
+            })
+            .finally(() => setSaveing(false));
+        }
       })
-      .finally(() => setSaveing(false));
+      .catch((errorInfo) => {
+        message.error(errorInfo?.errorFields[0].errors[0]);
+        setSaveing(false);
+      });
   };
 
   const onUnmount = () => {
@@ -351,8 +411,10 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
     setSaveing(true);
     updateSetUnmount(jobConfig.id)
       .then((res) => {
-        if (res.success) message.success("操作成功");
-        else message.error(res.message || "操作失败");
+        if (res.success) {
+          message.success("操作成功");
+          onOk && onOk();
+        } else message.error(res.message || "操作失败");
       })
       .finally(() => setSaveing(false));
   };
@@ -393,7 +455,12 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
         <Step title="挂载配置" />
       </Steps>
 
-      <Form form={form} labelCol={{ span: 6 }} wrapperCol={{ span: 18 }}>
+      <Form
+        disabled={jobConfig?.isMount}
+        form={form}
+        labelCol={{ span: 6 }}
+        wrapperCol={{ span: 18 }}
+      >
         {currentStep == 0 && (
           <>
             <Form.Item required name="id" label="作业标识">
@@ -665,12 +732,16 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
                   {jobConfig.isMount ? (
                     <div className="flex flex-row items-center">
                       <span className="text-green-400">当前已挂载磁盘</span>
+                      <span className="text-gray-400">
+                        （挂载中不可修改配置）
+                      </span>
                       <Divider type="vertical" className="ml-4" />
                       <Button
                         loading={saveing}
                         size="small"
                         type="link"
                         onClick={onUnmount}
+                        disabled={false}
                       >
                         卸载挂载
                       </Button>

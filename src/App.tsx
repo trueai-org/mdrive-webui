@@ -58,7 +58,7 @@ import "./App.css";
 
 function App() {
   const [pathname, setPathname] = useState("/");
-  const [showAbout, setShowAbout] = useState(false);
+  // const [showAbout, setShowAbout] = useState(false);
   const [showSetting, setShowSetting] = useState(false);
 
   // const [expandedRowKeys, setExpandedRowKeys] = useState<readonly Key[]>([]);
@@ -654,18 +654,18 @@ function App() {
         return (
           <div className="text-center text-gray-400">
             Power by{" "}
-            <a target="_blank" href="https://github.com/trueai-org/MDriveSync">
+            <a target="_blank" href="https://github.com/trueai-org/mdrive">
               MDrive
             </a>{" "}
-            v1.5.0 |{" "}
+            v1.6.0 |{" "}
             <a
               target="_blank"
-              href="https://github.com/trueai-org/MDriveSyncWebUI"
+              href="https://github.com/trueai-org/mdrive-webui"
             >
               WebUI
             </a>{" "}
             |{" "}
-            <a target="_blank" href="https://github.com/trueai-org/MDriveSync">
+            <a target="_blank" href="https://github.com/trueai-org/mdrive">
               官网
             </a>{" "}
             |{" "}
@@ -686,9 +686,9 @@ function App() {
             if (item.path == "/setting") {
               setShowSetting(true);
             }
-            if (item.path == "/about") {
-              setShowAbout(true);
-            }
+            // if (item.path == "/about") {
+            //   setShowAbout(true);
+            // }
             if (item.path?.startsWith("http")) {
               window.open(item.path);
             }
@@ -900,7 +900,7 @@ function App() {
         currentDriveId={currentDriveId}
       />
 
-      <Modal
+      {/* <Modal
         title="关于"
         open={showAbout}
         width={760}
@@ -925,14 +925,14 @@ function App() {
               更多文档：
               <a
                 target="_blank"
-                href="https://github.com/trueai-org/MDriveSync"
+                href="https://github.com/trueai-org/mdrive"
               >
-                MDriveSync 官网
+                MDrive 官网
               </a>
             </div>
           </div>
         </div>
-      </Modal>
+      </Modal> */}
 
       <Modal
         title="设置"
@@ -992,10 +992,52 @@ function App() {
             <span className="flex flex-col flex-none w-20">
               <span>登录密码：</span>
             </span>
-            <div className="flex flex-col flex-1 text-gray-400">
-              请修改配置 appsettings.json，如果通过 docker
+            <div className="flex flex-col flex-1 text-gray-500">
+              关于登录密码说明，请修改配置 appsettings.json，如果通过 docker
               启动也可以通过环境变量修改，示例：-e BASIC_AUTH_USER=admin -e
               BASIC_AUTH_PASSWORD=123456
+            </div>
+          </div>
+
+          <div className="flex flex-row">
+            <span className="flex flex-col flex-none w-20">
+              <span>更多说明：</span>
+            </span>
+            <div className="flex flex-col flex-1 text-gray-500 space-y-2">
+              <div>
+                多平台、模块化、安全的云盘自动同步/备份工具，支持本地存储、阿里云盘等，支持
+                <span className="text-orange-400">
+                  {" "}
+                  AES256-GCM、ChaCha20-Poly1305{" "}
+                </span>
+                加密，支持
+                <span className="text-orange-400"> SHA256、BLAKE3 </span>
+                哈希算法，支持
+                <span className="text-orange-400"> Zstd、LZ4、Snappy </span>
+                压缩，支持
+                <span className="text-pink-400">
+                  {" "}
+                  文件名加密、文件打包、文件去重{" "}
+                </span>
+                等功能，支持容灾恢复，即便损坏{" "}
+                <span className="text-red-400">99%</span>{" "}
+                的文件，仍可支持恢复，支持单向、镜像、双向等同步/备份，软件完全免费开源，
+                <span className="font-bold">
+                  任何第三方或服务商都无查看您的数据，保证您的数据安全!
+                </span>
+              </div>
+              <div>
+                提供 Docker 版、Windows 版、Web 版、Linux 版等多平台版本。
+              </div>
+              <div>
+                支持多种算法同步与备份，保证数据的安全性，任何第三方、任何云盘服务商都无法查看或分析你的数据，只有通过你本人设置的安全密钥才能解密数据，保证您的数据安全和隐私。
+              </div>
+              <div>
+                更多文档：
+                <a target="_blank" href="https://github.com/trueai-org/mdrive">
+                  MDrive 官网
+                </a>
+              </div>
             </div>
           </div>
         </div>

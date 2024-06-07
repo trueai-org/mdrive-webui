@@ -1,6 +1,6 @@
 # MDrive Web UI
 
-这是 [MDrive](https://github.com/trueai-org/MDriveSync) 的 Web UI 项目。
+这是 [MDrive](https://github.com/trueai-org/mdrive) 的 Web UI 项目。
 
 ## 开发
 

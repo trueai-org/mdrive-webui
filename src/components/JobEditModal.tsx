@@ -771,9 +771,9 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
               label="文件对比检查算法"
             >
               <Select>
-                <Select.Option value="md5">MD5</Select.Option>
-                <Select.Option value="sha1">SHA1</Select.Option>
-                <Select.Option value="sha256">SHA256</Select.Option>
+                <Select.Option value="SHA1">SHA1</Select.Option>
+                <Select.Option value="SHA256">SHA256</Select.Option>
+                <Select.Option value="BLAKE3">BLAKE3</Select.Option>
               </Select>
             </Form.Item>
             <Form.Item
@@ -781,15 +781,10 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
               label="文件对比检查级别"
               tooltip="文件变更时，文件是否变动检查算法级别，默认：1"
               help={
-                <span>
-                  0：比较文件大小和时间，1：采样计算文件
-                  hash（推荐），2：比较整个文件的 hash
-                  <br />
-                  3：比较文件头部 hash，4：比较文件尾部 hash
-                </span>
+                <span>1：采样计算文件（推荐），2：计算整个文件（耗时）</span>
               }
             >
-              <InputNumber min={0} max={4} />
+              <InputNumber min={1} max={2} />
             </Form.Item>
             <Form.Item
               name="fileWatcher"

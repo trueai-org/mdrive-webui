@@ -174,7 +174,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
     });
   };
 
-  const isEncrypt = Form.useWatch('isEncrypt', form);
+  const isEncrypt = Form.useWatch("isEncrypt", form);
 
   const next = () => {
     form
@@ -588,7 +588,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
                   required
                 >
                   <Select disabled={allStepsData?.id ? true : false}>
-                    <Select.Option value="">None</Select.Option>
+                    <Select.Option>None</Select.Option>
                     <Select.Option value="Zstd">Zstd</Select.Option>
                     <Select.Option value="LZ4">LZ4</Select.Option>
                     <Select.Option value="Snappy">Snappy</Select.Option>

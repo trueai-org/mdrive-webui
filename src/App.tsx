@@ -461,6 +461,12 @@ function App() {
       defaultDrive: "backup",
       target: "",
       sources: [],
+      isEncrypt: false,
+      isEncryptName: false,
+      hashAlgorithm: "SHA256",
+      encryptAlgorithm: "AES256-GCM",
+      encryptKey: "",
+      compressAlgorithm: "Zstd",
     });
     setVisibleEditJob(true);
   };

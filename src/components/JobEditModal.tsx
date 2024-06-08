@@ -781,7 +781,9 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
               label="文件对比检查级别"
               tooltip="文件变更时，文件是否变动检查算法级别，默认：1"
               help={
-                <span>1：采样计算文件（推荐），2：计算整个文件（耗时）</span>
+                <span>
+                  1：采样计算文件（推荐，头+中间+尾部+元信息+随机），2：计算整个文件（耗时）
+                </span>
               }
             >
               <InputNumber min={1} max={2} />

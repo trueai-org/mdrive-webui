@@ -597,7 +597,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
                 <Form.Item
                   tooltip="默认：SHA256"
                   name="hashAlgorithm"
-                  label="HASH 算法"
+                  label="哈希算法"
                   required
                 >
                   <Select disabled={allStepsData?.id ? true : false}>

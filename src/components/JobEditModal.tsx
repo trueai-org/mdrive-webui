@@ -14,7 +14,14 @@ import {
   AutoComplete,
   Divider,
 } from "antd";
-import { FolderTwoTone, HomeTwoTone, UserOutlined } from "@ant-design/icons";
+import {
+  FolderTwoTone,
+  HomeTwoTone,
+  UserOutlined,
+  ReloadOutlined,
+  CopyOutlined,
+} from "@ant-design/icons";
+
 import { IDriveJob } from "@/api/model";
 import {
   addJob,
@@ -53,6 +60,8 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
   const [cronTags, setCronTags] = useState<string[]>([]);
   const [pointOptions, setPointOptions] = useState<{ value: string }[]>([]);
   const [point, setPoint] = useState<string>();
+
+  const [showPwd, setShowPwd] = useState<boolean>();
 
   useEffect(() => {
     getCronTags().then((res) => {
@@ -164,6 +173,8 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
       setAllStepsData({ ...allStepsData, ...values });
     });
   };
+
+  const isEncrypt = Form.useWatch('isEncrypt', form);
 
   const next = () => {
     form
@@ -419,6 +430,32 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
       .finally(() => setSaveing(false));
   };
 
+  // 写一个随机 16~32 位的密码随机
+  const randomString = () => {
+    const len = Math.floor(Math.random() * 16) + 16;
+    const chars =
+      "ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678@#%&*——+-={}|0123456789,.//';[]{]\\|\"<>?~`!@#$%^&*()_+";
+
+    const maxPos = chars.length;
+    let pwd = "";
+    for (let i = 0; i < len; i++) {
+      pwd += chars.charAt(Math.floor(Math.random() * maxPos));
+    }
+
+    return pwd;
+  };
+  const copyToClipboard = () => {
+    const pwd = form.getFieldValue("encryptKey");
+    navigator.clipboard.writeText(pwd).then(
+      () => {
+        message.success("复制成功");
+      },
+      () => {
+        message.error("复制失败");
+      }
+    );
+  };
+
   return (
     <Modal
       title="作业配置"
@@ -463,9 +500,6 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
       >
         {currentStep == 0 && (
           <>
-            <Form.Item required name="id" label="作业标识">
-              <Input disabled />
-            </Form.Item>
             <Form.Item
               name="name"
               label="作业名称"
@@ -473,9 +507,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
             >
               <Input />
             </Form.Item>
-            <Form.Item name="description" label="作业描述">
-              <Input />
-            </Form.Item>
+
             <Form.Item
               name="schedules"
               label="作业计划"
@@ -511,6 +543,100 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
                 <Select.Option value={2}>双向</Select.Option>
               </Select>
             </Form.Item>
+            <Form.Item
+              name="isEncrypt"
+              label="启用加密"
+              valuePropName="checked"
+              tooltip="是否启用阿里云盘文件加密功能"
+              help="文件结构保持不变，文件内容加密，加密后的文件无法直接查看，解密后才能查看。"
+            >
+              <Checkbox
+                disabled={allStepsData?.id ? true : false}
+                onChange={updateStepData}
+              />
+            </Form.Item>
+
+            {isEncrypt && (
+              <>
+                <Form.Item
+                  name="isEncryptName"
+                  label="文件名加密"
+                  valuePropName="checked"
+                  tooltip="是否启用对文件名称进行加密"
+                  help="启用文件名称加密，将会额外占用 1KB 的空间。"
+                >
+                  <Checkbox disabled={allStepsData?.id ? true : false} />
+                </Form.Item>
+
+                <Form.Item
+                  tooltip="默认：AES256-GCM"
+                  name="encryptAlgorithm"
+                  label="加密算法"
+                  required
+                >
+                  <Select disabled={allStepsData?.id ? true : false}>
+                    <Select.Option value="AES256-GCM">AES256-GCM</Select.Option>
+                    <Select.Option value="ChaCha20-Poly1305">
+                      ChaCha20-Poly1305
+                    </Select.Option>
+                  </Select>
+                </Form.Item>
+                <Form.Item
+                  tooltip="默认：Zstd"
+                  name="compressAlgorithm"
+                  label="压缩算法"
+                  required
+                >
+                  <Select disabled={allStepsData?.id ? true : false}>
+                    <Select.Option value="">None</Select.Option>
+                    <Select.Option value="Zstd">Zstd</Select.Option>
+                    <Select.Option value="LZ4">LZ4</Select.Option>
+                    <Select.Option value="Snappy">Snappy</Select.Option>
+                  </Select>
+                </Form.Item>
+                <Form.Item
+                  tooltip="默认：SHA256"
+                  name="hashAlgorithm"
+                  label="HASH 算法"
+                  required
+                >
+                  <Select disabled={allStepsData?.id ? true : false}>
+                    <Select.Option value="SHA256">SHA256</Select.Option>
+                    <Select.Option value="BLAKE3">BLAKE3</Select.Option>
+                  </Select>
+                </Form.Item>
+                <Form.Item label="密钥" required>
+                  <Form.Item name="encryptKey" noStyle>
+                    <Input.Password
+                      style={{ width: "60%" }}
+                      visibilityToggle={{
+                        visible: showPwd,
+                        onVisibleChange: setShowPwd,
+                      }}
+                      disabled={allStepsData?.id ? true : false}
+                    />
+                  </Form.Item>
+
+                  {!allStepsData?.id && (
+                    <Button
+                      type="link"
+                      onClick={() => {
+                        setShowPwd(true);
+                        const pwd = randomString();
+                        form.setFieldsValue({ encryptKey: pwd });
+                      }}
+                      icon={<ReloadOutlined />}
+                    ></Button>
+                  )}
+
+                  <Button
+                    type="link"
+                    onClick={copyToClipboard}
+                    icon={<CopyOutlined />}
+                  ></Button>
+                </Form.Item>
+              </>
+            )}
           </>
         )}
         {currentStep == 1 && (
@@ -633,6 +759,12 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
         )}
         {currentStep == 2 && (
           <>
+            <Form.Item required name="id" label="作业标识">
+              <Input disabled />
+            </Form.Item>
+            <Form.Item name="description" label="作业描述">
+              <Input />
+            </Form.Item>
             <Form.Item
               name="checkAlgorithm"
               tooltip="文件是否变更检查算法"

@@ -13,7 +13,7 @@
   "dependencies": {
     "@ant-design/pro-components": "^2.6.43",
     "@tanstack/react-query": "^5.17.7",
-    "antd": "^5.12.5",
+    "antd": "^5.18.0",
     "axios": "^1.6.3",
     "date-fns": "^3.0.6",
     "fetch-jsonp": "^1.3.0",

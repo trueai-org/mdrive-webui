@@ -61,6 +61,13 @@ export interface IDriveJob {
   downloadThread: number;
   metadata?: IJobMetadata;
   mountConfig?: IDriveMountConfig;
+  isEncrypt?: boolean;
+  isEncryptName?: boolean;
+  hashAlgorithm: string;
+  encryptAlgorithm: string;
+  encryptKey: string;
+  compressAlgorithm: string;
+
 
   // 前台展示
   mountReadOnly?: boolean;

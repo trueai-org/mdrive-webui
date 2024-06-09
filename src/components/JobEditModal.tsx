@@ -563,7 +563,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
                   label="文件名加密"
                   valuePropName="checked"
                   tooltip="是否启用对文件名称进行加密"
-                  help="启用文件名称加密，将会额外占用 1KB 的空间。"
+                  help="启用文件名称加密，将会额外占用 64B~1KB 的空间。"
                 >
                   <Checkbox disabled={allStepsData?.id ? true : false} />
                 </Form.Item>

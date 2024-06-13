@@ -302,3 +302,13 @@ export const getPaths = async (path: string = "") => {
   });
   return response.data;
 };
+
+
+// 封装上传文件
+export const uploadFile = async (formData: FormData) => {
+  return api.post<IResult>("/api/drive/import", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};

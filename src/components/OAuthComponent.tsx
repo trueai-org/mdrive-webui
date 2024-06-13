@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   AutoComplete,
   Button,
@@ -24,6 +24,7 @@ import {
   updateDrive,
   updateSetDriveMount,
   updateSetDriveUnmount,
+  uploadFile,
 } from "@/api";
 
 interface OAuthComponentProps {
@@ -322,6 +323,35 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
     }
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = async () => {
+    const fileInput = fileInputRef.current;
+    if (fileInput) {
+      fileInput.click(); // 触发文件选择
+    }
+  };
+
+  const handleFileChange = async (event: any) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await uploadFile(formData);
+      if (response.data.success) {
+        message.success("配置导入成功");
+        window.location.reload();
+      } else {
+        message.error("配置导入失败");
+      }
+    } catch (error) {
+      message.error("导入过程中发生错误");
+    }
+  };
+
   return (
     <>
       <Dropdown.Button
@@ -346,6 +376,10 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
           onClick: (e) => {
             if (e.key == "add") {
               onJobAdd && onJobAdd();
+            } else if (e.key == "import") {
+              handleFileSelect();
+            } else if (e.key == "export") {
+              window.open("/api/drive/export", "_blank");
             }
           },
         }}
@@ -574,6 +608,14 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
           </div>
         </Spin>
       </Modal>
+
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+        accept=".json" // 限制只能选择 JSON 文件
+      />
     </>
   );
 };

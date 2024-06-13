@@ -9,6 +9,7 @@ import {
   Switch,
   Table,
   Tag,
+  Tooltip,
   Tour,
   TourProps,
   message,
@@ -32,6 +33,7 @@ import {
   FileImageTwoTone,
   FileOutlined,
   DownloadOutlined,
+  LockTwoTone,
 } from "@ant-design/icons";
 import { format } from "date-fns";
 import { ColumnsType } from "antd/es/table";
@@ -40,7 +42,10 @@ import { Select } from "antd/lib";
 import { useQuery } from "@tanstack/react-query";
 
 import {
-  getDownloadFile,
+  addDownloadTask,
+  addDownloadTasks,
+  getDownloadFileV3,
+  getDownloadSettings,
   getDriveFiles,
   getDrives,
   getFile,
@@ -55,6 +60,13 @@ import JobEditModal from "./components/JobEditModal";
 import defaultProps from "./_defaultProps";
 
 import "./App.css";
+
+import DownloadManager from "./components/DownloadManager";
+
+// 下载状态类型
+type DownloadingState = {
+  [fileId: string]: boolean;
+};
 
 function App() {
   const [pathname, setPathname] = useState("/");
@@ -72,53 +84,260 @@ function App() {
   const [currentFile, setCurrentFile] = useState<IDriveFile>();
   const [rootFileId, setRootFileId] = useState<string>();
 
+  // 使用状态来追踪每个文件的下载状态
+  const [downloading, setDownloading] = useState<DownloadingState>({});
+
+  // 更新下载状态的函数
+  const handleDownload = (fileId: string) => {
+    if (!job) {
+      return;
+    }
+
+    setDownloading((prev) => ({ ...prev, [fileId]: true }));
+    getDownloadFileV3(job.id, fileId).then((c) => {
+      // 下载完成后更新状态
+      setDownloading((prev) => ({ ...prev, [fileId]: false }));
+      if (c.data && c.data.url) {
+        // 打开下载管理器弹窗
+        // 弹窗中确认下载、取消按钮
+        // url: string; downloadPath: string; fileName: string; fileId: string; jobId: string;
+        // UI 设计请参考 FDM 下载管理器
+
+        // 更新下载信息状态
+        setDownloadInfo({
+          url: c.data.url,
+          downloadPath: c.data.downloadPath,
+          fileName: c.data.fileName,
+          fileId: c.data.fileId,
+          jobId: c.data.jobId,
+        });
+        // 显示下载弹窗
+        setDownloadModalVisible(true);
+      }
+    });
+  };
+
+  const addDownloadSelectedTasks = async () => {
+    if (!job) {
+      return;
+    }
+
+    getDownloadSettings().then((res) => {
+      if (res.data) {
+        // 更新下载信息状态
+        setDownloadInfo({
+          downloadPath: res.data.defaultDownload,
+          fileIds: selectedRowKeys.map((x) => x.toString()),
+          jobId: job.id,
+        });
+
+        // 显示下载弹窗
+        setDownloadModalVisible(true);
+      }
+    });
+  };
+
+  // 弹窗显示状态及下载文件信息
+  const [downloadModalVisible, setDownloadModalVisible] = useState(false);
+  const [downloadInfo, setDownloadInfo] = useState<{
+    downloadPath: string;
+    jobId: string;
+    url?: string;
+    fileName?: string;
+    fileId?: string;
+    fileIds?: string[];
+  }>({
+    url: "",
+    downloadPath: "",
+    fileName: "",
+    fileId: "",
+    jobId: "",
+  });
+
+  const [downloadTaskLoading, setDownloadTaskLoading] = useState<boolean>();
+
+  const addTask = async () => {
+    try {
+      setDownloadTaskLoading(true);
+
+      if (downloadInfo && downloadInfo.fileId) {
+        // 单文件下载
+        addDownloadTask({
+          url: downloadInfo.url,
+          filePath: downloadInfo.downloadPath,
+          fileName: downloadInfo.fileName,
+          jobId: downloadInfo.jobId,
+          fileId: downloadInfo.fileId,
+        })
+          .then(() => {
+            // console.log("r", r);
+            setDownloadTaskLoading(false);
+            setDownloadModalVisible(false);
+            message.success("下载任务创建成功!");
+          })
+          .finally(() => {
+            setDownloadTaskLoading(false);
+          });
+      } else {
+        // 批量下载
+        addDownloadTasks({
+          jobId: downloadInfo.jobId,
+          fileIds: selectedRowKeys.map((x) => x.toString()),
+          filePath: downloadInfo.downloadPath,
+        })
+          .then(() => {
+            setDownloadTaskLoading(false);
+            setDownloadModalVisible(false);
+            message.success("批量下载任务创建成功!");
+
+            // 清除全选
+            setSelectedRowKeys([]);
+          })
+          .finally(() => {
+            setDownloadTaskLoading(false);
+          });
+      }
+    } catch (error) {
+      message.error("下载任务创建失败，请检查日志!");
+      setDownloadTaskLoading(false);
+    }
+  };
+
+  // 渲染下载确认弹窗，使用 Tailwind CSS 进行样式设计
+  const renderDownloadModal = () => (
+    <Modal
+      title={
+        downloadInfo.fileIds && downloadInfo.fileIds.length > 0
+          ? "批量下载文件"
+          : "下载文件"
+      }
+      open={downloadModalVisible}
+      onCancel={() => setDownloadModalVisible(false)}
+      maskClosable={false}
+      footer={[
+        <Button key="back" onClick={() => setDownloadModalVisible(false)}>
+          取消
+        </Button>,
+        <Button
+          loading={downloadTaskLoading}
+          key="submit"
+          type="primary"
+          onClick={() => addTask()}
+        >
+          确认下载
+        </Button>,
+      ]}
+      width={800}
+    >
+      <div className="space-y-4 py-6 pr-6">
+        {downloadInfo && downloadInfo.fileId && (
+          <div className="flex items-center">
+            <span className="text-gray-700 w-1/6 text-right mr-4">
+              下载链接:
+            </span>
+            <Input className="flex-grow" value={downloadInfo.url} disabled />
+          </div>
+        )}
+
+        <div className="flex items-center">
+          <span className="text-gray-700 w-1/6 text-right mr-4">保存位置:</span>
+          <Input
+            className="flex-grow"
+            value={downloadInfo.downloadPath}
+            onChange={(e) =>
+              setDownloadInfo({ ...downloadInfo, downloadPath: e.target.value })
+            }
+          />
+        </div>
+
+        {downloadInfo && downloadInfo.fileName && (
+          <div className="flex items-center">
+            <span className="text-gray-700 w-1/6 text-right mr-4">
+              文件名称:
+            </span>
+            <Input
+              className="flex-grow"
+              value={downloadInfo.fileName}
+              onChange={(e) =>
+                setDownloadInfo({ ...downloadInfo, fileName: e.target.value })
+              }
+            />
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+
   const fixedColumns: ColumnsType<IDriveFile> = [
     {
       title: "名称",
       dataIndex: "name",
       fixed: "left",
       render: (_, r) => {
+        // 如果是加密文件，增加追加显示锁图标
+        const icon = job && job.isEncrypt && (
+          <LockTwoTone twoToneColor="#eb2f96" style={{ marginRight: 4 }} />
+        );
+
         if (r.category == "image") {
           return (
-            <div className="space-x-1 text-base flex items-center cursor-pointer hover:text-blue-500">
-              <FileImageTwoTone />
-              <span>{r.name}</span>
-            </div>
+            <Tooltip placement="left" title={r.name}>
+              <div className="space-x-1 text-base flex items-center cursor-pointer hover:text-blue-500">
+                {icon}
+                <FileImageTwoTone />
+                <span>{r.localFileName || r.name}</span>
+              </div>
+            </Tooltip>
           );
         } else if (r.category == "video") {
           return (
-            <div className="space-x-1 text-base flex items-center cursor-pointer hover:text-blue-500">
-              <VideoCameraTwoTone />
-              <span>{r.name}</span>
-            </div>
+            <Tooltip placement="left" title={r.name}>
+              <div className="space-x-1 text-base flex items-center cursor-pointer hover:text-blue-500">
+                {icon}
+                <VideoCameraTwoTone />
+                <span>{r.localFileName || r.name}</span>
+              </div>
+            </Tooltip>
           );
         } else if (r.category == "doc") {
           return (
-            <div className="space-x-1 text-base flex items-center cursor-pointer hover:text-blue-500">
-              <FileTextOutlined />
-              <span>{r.name}</span>
-            </div>
+            <Tooltip placement="left" title={r.name}>
+              <div className="space-x-1 text-base flex items-center cursor-pointer hover:text-blue-500">
+                {icon}
+                <FileTextOutlined />
+                <span>{r.localFileName || r.name}</span>
+              </div>
+            </Tooltip>
           );
         } else if (r.category == "audio") {
           return (
-            <div className="space-x-1 text-base flex items-center cursor-pointer hover:text-blue-500">
-              <AudioTwoTone />
-              <span>{r.name}</span>
-            </div>
+            <Tooltip placement="left" title={r.name}>
+              <div className="space-x-1 text-base flex items-center cursor-pointer hover:text-blue-500">
+                {icon}
+                <AudioTwoTone />
+                <span>{r.localFileName || r.name}</span>
+              </div>
+            </Tooltip>
           );
         } else if (r.category == "zip") {
           return (
-            <div className="space-x-1 text-base flex items-center cursor-pointer hover:text-blue-500">
-              <FileZipTwoTone />
-              <span>{r.name}</span>
-            </div>
+            <Tooltip placement="left" title={r.name}>
+              <div className="space-x-1 text-base flex items-center cursor-pointer hover:text-blue-500">
+                {icon}
+                <FileZipTwoTone />
+                <span>{r.localFileName || r.name}</span>
+              </div>
+            </Tooltip>
           );
         } else if (r.category == "app") {
           return (
-            <div className="space-x-1 text-base flex items-center cursor-pointer hover:text-blue-500">
-              <FileOutlined />
-              <span>{r.name}</span>
-            </div>
+            <Tooltip placement="left" title={r.name}>
+              <div className="space-x-1 text-base flex items-center cursor-pointer hover:text-blue-500">
+                {icon}
+                <FileOutlined />
+                <span>{r.localFileName || r.name}</span>
+              </div>
+            </Tooltip>
           );
         } else if (r.isFolder) {
           return (
@@ -128,6 +347,7 @@ function App() {
               }}
               className="space-x-1 text-base flex items-center cursor-pointer hover:text-blue-500"
             >
+              {icon}
               <FolderOutlined />
               <span>{r.name}</span>
             </div>
@@ -135,9 +355,12 @@ function App() {
         }
 
         return (
-          <div className="space-x-1 text-base flex items-center cursor-pointer hover:text-blue-500">
-            <span>{r.name}</span>
-          </div>
+          <Tooltip placement="left" title={r.name}>
+            <div className="space-x-1 text-base flex items-center cursor-pointer hover:text-blue-500">
+              {icon}
+              <span>{r.localFileName || r.name}</span>
+            </div>
+          </Tooltip>
         );
       },
     },
@@ -169,27 +392,53 @@ function App() {
               ghost
               size="small"
               icon={<DownloadOutlined />}
-              // disabled={r.downLoading}
+              loading={downloading[r.file_id] || false}
+              disabled={downloading[r.file_id] || false}
               onClick={() => {
+                handleDownload(r.file_id);
+
+                // window.open(`/api/drive/download-v2/${job!.id}/${r.file_id}`);
+                // return;
+
+                // // r.downLoading = true;
+                // getDownloadFile(job!.id, r.file_id).then((c) => {
+                //   // r.downLoading = false;
+                //   // window.open(c.url);
+
+                //   const fileUrl = encodeURIComponent(c.url);
+                //   const name = encodeURIComponent(r.name);
+                //   window.open(
+                //     `/api/drive/download?url=${fileUrl}&name=${name}`
+                //   );
+
+                //   // const link = document.createElement("a");
+                //   // link.target = "_blank";
+                //   // link.href = c.url;
+                //   // link.download = r.name;
+                //   // document.body.appendChild(link);
+                //   // link.click();
+                //   // document.body.removeChild(link);
+                // });
+
                 // r.downLoading = true;
-                getDownloadFile(job!.id, r.file_id).then((c) => {
-                  // r.downLoading = false;
-                  // window.open(c.url);
+                // getDownloadFileV3(job!.id, r.file_id).then((c) => {
+                //   r.downLoading = false;
 
-                  const fileUrl = encodeURIComponent(c.url);
-                  const name = encodeURIComponent(r.name);
-                  window.open(
-                    `/api/drive/download?url=${fileUrl}&name=${name}`
-                  );
-
-                  // const link = document.createElement("a");
-                  // link.target = "_blank";
-                  // link.href = c.url;
-                  // link.download = r.name;
-                  // document.body.appendChild(link);
-                  // link.click();
-                  // document.body.removeChild(link);
-                });
+                //   // 打开弹窗
+                //   // window.open(c.url);
+                //   // const fileUrl = encodeURIComponent(c.url);
+                //   // const name = encodeURIComponent(r.name);
+                //   // window.open(
+                //   //   `/api/drive/download?url=${fileUrl}&name=${name}`
+                //   // );
+                //   // const link = document.createElement("a");
+                //   // link.target = "_blank";
+                //   // link.href = c.url;
+                //   // link.download = r.name;
+                //   // document.body.appendChild(link);
+                //   // link.click();
+                //   // document.body.removeChild(link);
+                // });
               }}
             ></Button>
           );
@@ -627,6 +876,8 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataJobStates]);
 
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+
   return (
     // <ConfigProvider
     //   theme={{
@@ -663,7 +914,7 @@ function App() {
             <a target="_blank" href="https://github.com/trueai-org/mdrive">
               MDrive
             </a>{" "}
-            v1.6.0 |{" "}
+            v2.0.0 |{" "}
             <a
               target="_blank"
               href="https://github.com/trueai-org/mdrive-webui"
@@ -797,7 +1048,14 @@ function App() {
                     title: {},
                     subTitle: {
                       render: (_, row) => {
-                        return getJobStateTag(row.job.state);
+                        return (
+                          <>
+                            {getJobStateTag(row.job.state)}
+                            {row.job.isEncrypt && (
+                              <LockTwoTone twoToneColor="#eb2f96" />
+                            )}
+                          </>
+                        );
                       },
                     },
                     description: {
@@ -848,8 +1106,9 @@ function App() {
         <ProCard
           bodyStyle={{ margin: 0, padding: 0 }}
           headerBordered
-          title={<div className="font-bold">文件管理</div>}
+          title={<div className="font-bold mr-6">文件管理</div>}
           ref={welRef2}
+          extra={<DownloadManager />}
         >
           <div className="flex px-6 py-4 flex-col w-full space-y-3 overflow-y-auto">
             <div className="flex flex-row space-x-2 items-center w-full">
@@ -885,9 +1144,31 @@ function App() {
               ref={tblRef}
               size="small"
               loading={tableLoading}
+              rowSelection={{
+                type: "checkbox",
+                selectedRowKeys,
+                onChange: setSelectedRowKeys,
+                columnWidth: 50,
+              }}
             />
 
-            {job && <div className="text-xs text-gray-600">{currentInfo}</div>}
+            <div className="flex flex-row items-center justify-between">
+              {job && (
+                <div className="text-xs text-gray-600">{currentInfo}</div>
+              )}
+
+              <div>
+                <Button
+                  type="primary"
+                  ghost
+                  icon={<DownloadOutlined />}
+                  disabled={selectedRowKeys.length === 0}
+                  onClick={addDownloadSelectedTasks}
+                >
+                  批量下载
+                </Button>
+              </div>
+            </div>
             {/* <Input.TextArea
               className="bg-gray-50"
               rows={4}
@@ -939,6 +1220,8 @@ function App() {
           </div>
         </div>
       </Modal> */}
+
+      {renderDownloadModal()}
 
       <Modal
         title="设置"

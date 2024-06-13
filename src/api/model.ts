@@ -1,7 +1,6 @@
 import { Key } from "react";
 
 export interface IDrive {
-  
   id: string;
   name: string;
   tokenType: string;
@@ -68,7 +67,6 @@ export interface IDriveJob {
   encryptKey: string;
   compressAlgorithm: string;
 
-
   // 前台展示
   mountReadOnly?: boolean;
   mountOnStartup?: boolean;
@@ -109,6 +107,7 @@ export interface IDriveFile {
   updated_at: Date;
   mime_type: string;
   status: string;
+  localFileName?: string;
 
   // 路径 key
   key?: string;
@@ -200,4 +199,35 @@ export interface ITreeNode {
    * 如果元素是一个符号链接则为 true
    */
   symlink: boolean;
+}
+
+export interface DownloadManagerSetting {
+  defaultDownload: string;
+  maxParallelDownload: number;
+  downloadSpeedLimit: number;
+}
+
+export enum DownloadStatus {
+  Pending = 0,
+  Downloading = 1,
+  Paused = 2,
+  Completed = 3,
+  Failed = 4,
+}
+
+export interface DownloadTask {
+  id: string;
+  url: string;
+  status: DownloadStatus;
+  statusString: string;
+  fileName: string;
+  speedString: string;
+  selected?: boolean;
+  error?: string;
+  isEncrypted: boolean;
+  durationString: string;
+  durationSeconds: number;
+
+  totalBytes: number;
+  downloadedBytes: number;
 }

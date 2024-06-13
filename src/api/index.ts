@@ -1,5 +1,7 @@
 import axios from "axios";
 import {
+  DownloadManagerSetting,
+  DownloadTask,
   IDrive,
   IDriveDownloadFile,
   IDriveFile,
@@ -50,8 +52,6 @@ export const updateSetUnmount = async (jobId: string) => {
   const response = await api.post<IResult>(`/api/drive/job/unmount/${jobId}`);
   return response.data;
 };
-
-
 
 /**
  * 云盘挂载
@@ -115,6 +115,105 @@ export const getDriveFiles = async (jobId: string, parentId?: string) => {
 export const getDownloadFile = async (jobId: string, fileId: string) => {
   const response = await api.get<IDriveDownloadFile>(
     `/api/drive/download/${jobId}/${fileId}`
+  );
+  return response.data;
+};
+
+/**
+ * 下载文件v3
+ * @param jobId
+ * @param fileId
+ * @returns
+ */
+export const getDownloadFileV3 = async (jobId: string, fileId: string) => {
+  const response = await api.get<
+    IResult<{
+      url: string;
+      downloadPath: string;
+      fileName: string;
+      fileId: string;
+      jobId: string;
+    }>
+  >(`/api/drive/download-v3/${jobId}/${fileId}`);
+  return response.data;
+};
+
+/*
+ * 添加下载任务
+ * @param jobId
+ * @returns
+ */
+export const addDownloadTask = async (data: any) => {
+  const response = await api.post<IResult>(`/api/drive/download-task`, data);
+  return response.data;
+};
+
+// 批量添加任务
+export const addDownloadTasks = async (data: any) => {
+  const response = await api.post<IResult>(`/api/drive/download-tasks`, data);
+  return response.data;
+};
+
+// 暂停下载任务
+export const pauseDownloadTask = async (taskId: string) => {
+  return api.post<IResult>(`/api/drive/download-pause/${taskId}`);
+};
+
+// 继续下载任务
+export const continueDownloadTask = async (id: string) => {
+  return axios.post<IResult>(`/api/drive/download-resume/${id}`);
+};
+
+// 移除下载任务
+export const removeDownloadTask = async (taskId: string) => {
+  return api.delete<IResult>(`/api/drive/download/${taskId}`);
+};
+
+// 删除已下载的文件
+export const removeFileDownloadTask = async (taskId: string) => {
+  return api.delete<IResult>(`/api/drive/download-removefile/${taskId}`);
+};
+
+// 打开下载目录文件夹，并选中当前下载的文件
+export const openfoldDownloadTask = async (taskId: string) => {
+  return api.post<IResult>(`/api/drive/download-openfolder/${taskId}`);
+};
+
+// 获取所有下载任务的状态
+export const getDownloadTasks = async () => {
+  return api.get<IResult<DownloadTask[]>>("/api/drive/download-status");
+};
+
+// 获取全局下载速度
+export const getGlobalDownloadSpeed = async () => {
+  return api.get<
+    IResult<{
+      speed: number;
+      speedString: string;
+    }>
+  >("/api/drive/download-globalspeed");
+};
+
+// 设置最大并行下载数
+export const setMaxParallelDownloads = async (maxParallelDownloads: number) => {
+  return api.post<IResult>("/api/drive/download-maxparallel", {
+    maxParallelDownloads,
+  });
+};
+
+// 获取下载管理器配置
+export const getDownloadSettings = async () => {
+  const response = await api.get<IResult<DownloadManagerSetting>>(
+    "/api/drive/download-settings"
+  );
+  return response.data;
+};
+
+// 设置下载管理器配置
+export const setDownloadSettings = async (settings: DownloadManagerSetting) => {
+  const response = await api.post<IResult>(
+    "/api/drive/download-settings",
+    settings
   );
   return response.data;
 };

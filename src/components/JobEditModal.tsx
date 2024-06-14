@@ -613,7 +613,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
                         visible: showPwd,
                         onVisibleChange: setShowPwd,
                       }}
-                      disabled={allStepsData?.id ? true : false}
+                      readOnly={allStepsData?.id ? true : false}
                     />
                   </Form.Item>
 

@@ -914,7 +914,7 @@ function App() {
             <a target="_blank" href="https://github.com/trueai-org/mdrive">
               MDrive
             </a>{" "}
-            v2.0.0 |{" "}
+            v2.0.1 |{" "}
             <a
               target="_blank"
               href="https://github.com/trueai-org/mdrive-webui"

@@ -445,15 +445,19 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
     return pwd;
   };
   const copyToClipboard = () => {
-    const pwd = form.getFieldValue("encryptKey");
-    navigator.clipboard.writeText(pwd).then(
-      () => {
-        message.success("复制成功");
-      },
-      () => {
-        message.error("复制失败");
-      }
-    );
+    try {
+      const pwd = form.getFieldValue("encryptKey");
+      navigator.clipboard.writeText(pwd).then(
+        () => {
+          message.success("复制成功");
+        },
+        () => {
+          message.error("复制失败");
+        }
+      );
+    } catch (error) {
+      message.error("复制失败，请手动复制");
+    }
   };
 
   return (

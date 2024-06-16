@@ -34,6 +34,8 @@ import {
   FileOutlined,
   DownloadOutlined,
   LockTwoTone,
+  DesktopOutlined,
+  CloudOutlined,
 } from "@ant-design/icons";
 import { format } from "date-fns";
 import { ColumnsType } from "antd/es/table";
@@ -53,7 +55,13 @@ import {
   updateJobState,
 } from "./api";
 
-import { IDrive, IDriveFile, IDriveJob, JobState } from "./api/model";
+import {
+  IDrive,
+  IDriveFile,
+  IDriveJob,
+  ILocalStorageConfig,
+  JobState,
+} from "./api/model";
 import { formatFileSize, getJobStateTag } from "./utils";
 import OAuthComponent from "./components/OAuthComponent";
 import JobEditModal from "./components/JobEditModal";
@@ -62,6 +70,8 @@ import defaultProps from "./_defaultProps";
 import "./App.css";
 
 import DownloadManager from "./components/DownloadManager";
+import { getStorages } from "./api/local";
+import OAuthComponentLocal from "./components/OAuthComponentLocal";
 
 // 下载状态类型
 type DownloadingState = {
@@ -72,6 +82,8 @@ function App() {
   const [pathname, setPathname] = useState("/");
   // const [showAbout, setShowAbout] = useState(false);
   const [showSetting, setShowSetting] = useState(false);
+  // 支持
+  const [showSupport, setShowSupport] = useState(false);
 
   // const [expandedRowKeys, setExpandedRowKeys] = useState<readonly Key[]>([]);
 
@@ -588,12 +600,24 @@ function App() {
 
   useEffect(() => {
     loadDrives();
+    loadLocalStorages();
   }, []);
 
+  // 加载阿里云盘
   const loadDrives = () => {
     setLoading(true);
     getDrives().then((c) => {
       setDrives(c || []);
+      setLoading(false);
+    });
+  };
+
+  // 加载本地存储
+  const [localStorages, setLocalStorages] = useState<ILocalStorageConfig[]>();
+  const loadLocalStorages = () => {
+    setLoading(true);
+    getStorages().then((c) => {
+      setLocalStorages(c.data || []);
       setLoading(false);
     });
   };
@@ -914,7 +938,7 @@ function App() {
             <a target="_blank" href="https://github.com/trueai-org/mdrive">
               MDrive
             </a>{" "}
-            v2.0.1 |{" "}
+            v3.0.0 |{" "}
             <a
               target="_blank"
               href="https://github.com/trueai-org/mdrive-webui"
@@ -942,6 +966,9 @@ function App() {
             }
             if (item.path == "/setting") {
               setShowSetting(true);
+            }
+            if (item.path == "/support") {
+              setShowSupport(true);
             }
             // if (item.path == "/about") {
             //   setShowAbout(true);
@@ -990,6 +1017,7 @@ function App() {
                   }}
                   headerTitle={
                     <div className="text-base whitespace-nowrap flex items-center">
+                      <CloudOutlined className="mr-2" />
                       <span className="mr-2"> {c.name || "未命名云盘"} </span>
                       {c.metadata && c.metadata?.identity && (
                         <Tag className="uppercase" color="pink">
@@ -1016,6 +1044,118 @@ function App() {
                       <OAuthComponent
                         drive={c}
                         onOk={loadDrives}
+                        onJobAdd={() => onJobAdd(c.id)}
+                      />,
+                    ];
+                  }}
+                  // expandable={{
+                  //   expandedRowKeys: c.expandedRowKeys,
+                  //   onExpandedRowsChange: (e) => {
+                  //     // c.expandedRowKeys = [
+                  //     //   c.jobs.findIndex((x) => x.name == k.title),
+                  //     // ];
+                  //     // console.log("e", c.expandedRowKeys, e);
+                  //     //  c.expandedRowKeys = e;
+                  //     setExpandedRowKeys(e);
+                  //   },
+                  // }}
+                  dataSource={c.jobs.map((x) => {
+                    return {
+                      title: x.name,
+                      job: x,
+                    };
+                  })}
+                  onRow={(r) => {
+                    return {
+                      onClick: () => {
+                        onSelectJob(r.job);
+                      },
+                    };
+                  }}
+                  metas={{
+                    title: {},
+                    subTitle: {
+                      render: (_, row) => {
+                        return (
+                          <>
+                            {getJobStateTag(row.job.state)}
+                            {row.job.isEncrypt && (
+                              <LockTwoTone twoToneColor="#eb2f96" />
+                            )}
+                          </>
+                        );
+                      },
+                    },
+                    description: {
+                      render: (_, row) => {
+                        return (
+                          <>
+                            <div className="text-xs">
+                              包含 {row.job?.metadata?.fileCount || 0} 个文件，
+                              {row.job?.metadata?.folderCount || 0}{" "}
+                              个文件夹，总大小{" "}
+                              {formatFileSize(
+                                row.job?.metadata?.totalSize || 0
+                              )}
+                            </div>
+
+                            {row.job?.metadata?.message && (
+                              <div className="text-xs">
+                                {row.job!.metadata!.message}
+                              </div>
+                            )}
+                          </>
+                        );
+                      },
+                    },
+                    actions: {
+                      render: (_, r) => {
+                        return (
+                          <Dropdown.Button
+                            size="small"
+                            menu={{
+                              items: getMenuItems(r.job.state),
+                              onClick: (e) => {
+                                onJobMenu(e, r.job.id);
+                              },
+                            }}
+                            onClick={() => onJobEdit(r.job)}
+                          >
+                            <EditOutlined />
+                          </Dropdown.Button>
+                        );
+                      },
+                    },
+                  }}
+                />
+              );
+            })}
+
+          {/* 本地存储 */}
+          {localStorages &&
+            localStorages.length > 0 &&
+            localStorages?.map((c, i) => {
+              return (
+                <ProList<{
+                  job: IDriveJob;
+                  title: string;
+                }>
+                  rowKey={c.id + i}
+                  key={i}
+                  style={{
+                    borderBlockEnd: "1px solid rgba(211, 167, 255, 0.17)",
+                  }}
+                  headerTitle={
+                    <div className="text-base whitespace-nowrap flex items-center">
+                      <DesktopOutlined className="mr-2" />
+                      <span className="mr-2"> {c.name || "未命工作组"} </span>
+                    </div>
+                  }
+                  toolBarRender={() => {
+                    return [
+                      <OAuthComponentLocal
+                        config={c}
+                        onOk={loadLocalStorages}
                         onJobAdd={() => onJobAdd(c.id)}
                       />,
                     ];
@@ -1220,6 +1360,47 @@ function App() {
           </div>
         </div>
       </Modal> */}
+
+      <Modal
+        title="赞助与支持"
+        open={showSupport}
+        width={760}
+        footer={null}
+        onCancel={() => setShowSupport(false)}
+      >
+        <div className="my-3">
+          <div className="flex flex-col space-y-2">
+            <div>感谢所有的贡献者！</div>
+            <div className="text-sm font-bold">
+              如果您觉得本项目对您有帮助，欢迎收藏点赞，也可通过扫码购买会员，对作者提供支持！
+            </div>
+            <div>
+              <span>
+                👍👍阿里云盘推广返现，8T云盘低至6元/月，点击购买会员支持作者，最高30%返现🌸🌸
+              </span>
+              <a
+                target="_blank"
+                href="https://www.alipan.com/cpx/member?userCode=MzAwMzE5"
+              >
+                https://www.alipan.com/cpx/member?userCode=MzAwMzE5
+              </a>
+            </div>
+            <div>限时推广返现，APP 扫码购买会员</div>
+            <div>
+              <img src="/images/aliyun.png" className="w-24"></img>
+            </div>
+
+            <div className="text-sm font-bold">
+              微信返现客服：<span className="text-blue-500">tab-ai</span>
+              （添加时请备注阿里云盘）
+            </div>
+            <div className="text-sm font-bold"> 打赏作者 </div>
+            <div>
+              <img src="/images/taibai.jpeg" className="w-64"></img>
+            </div>
+          </div>
+        </div>
+      </Modal>
 
       {renderDownloadModal()}
 

@@ -7,6 +7,7 @@ import {
   Dropdown,
   Form,
   Input,
+  MenuProps,
   Modal,
   Popconfirm,
   Select,
@@ -15,8 +16,15 @@ import {
   message,
 } from "antd";
 import fetchJsonp from "fetch-jsonp";
-import { PlusOutlined, EditOutlined } from "@ant-design/icons";
-import { IDrive } from "@/api/model";
+import {
+  PlusOutlined,
+  EditOutlined,
+  DesktopOutlined,
+  ExportOutlined,
+  ImportOutlined,
+  CloudOutlined,
+} from "@ant-design/icons";
+import { IDrive, LocalStorageEditRequest } from "@/api/model";
 import {
   addDrive,
   deleteDrive,
@@ -26,6 +34,7 @@ import {
   updateSetDriveUnmount,
   uploadFile,
 } from "@/api";
+import { addStorage } from "@/api/local";
 
 interface OAuthComponentProps {
   isAdd?: boolean;
@@ -352,45 +361,129 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
     }
   };
 
+  const handleMenuClick: MenuProps["onClick"] = (e) => {
+    if (e.key == "addaliyun") {
+      showModal();
+    } 
+    else if (e.key == "addlocal") {
+      setIsModalVisibleLocal(true);
+    }
+    else if (e.key == "import") {
+      handleFileSelect();
+    } else if (e.key == "export") {
+      window.open("/api/drive/export", "_blank");
+    }
+  };
+
+  const items: MenuProps["items"] = [
+    {
+      label: "添加阿里云盘",
+      key: "addaliyun",
+      icon: <CloudOutlined />,
+    },
+    {
+      label: "添加本地存储",
+      key: "addlocal",
+      icon: <DesktopOutlined />,
+    },
+    {
+      label: "导入配置",
+      key: "import",
+      icon: <ImportOutlined />,
+    },
+    {
+      label: "导出配置",
+      key: "export",
+      icon: <ExportOutlined />,
+    },
+  ];
+
+  const menuProps = {
+    items,
+    onClick: handleMenuClick,
+  };
+
+  // 本地存储工作组
+  const [isModalVisibleLocal, setIsModalVisibleLocal] = useState(false);
+  const [nameLocal, setNameLocal] = useState("");
+  const [formLocal] = Form.useForm<LocalStorageEditRequest>();
+  const onSaveLocal = async () => {
+    if (!nameLocal) {
+      message.error("请输入工作组名称");
+      return;
+    }
+
+    setSaveing(true);
+    formLocal
+      .validateFields()
+      .then(async (data) => {
+        data.name = nameLocal;
+        const res = await addStorage(data);
+        if (res?.success) {
+          message.success("保存成功");
+          onOk && onOk();
+          setSaveing(false);
+          hideModal();
+          window.location.reload();
+        } else {
+          message.error(res?.message || "操作失败");
+        }
+      })
+      .catch((errorInfo) => {
+        message.error(errorInfo?.errorFields[0].errors[0]);
+      })
+      .finally(() => {
+        setSaveing(false);
+      });
+  };
+
   return (
     <>
-      <Dropdown.Button
-        menu={{
-          items: isAdd
-            ? [
-                {
-                  key: "import",
-                  label: "导入配置",
-                },
-                {
-                  key: "export",
-                  label: "导出配置",
-                },
-              ]
-            : [
-                {
-                  key: "add",
-                  label: "添加作业",
-                },
-              ],
-          onClick: (e) => {
-            if (e.key == "add") {
-              onJobAdd && onJobAdd();
-            } else if (e.key == "import") {
-              handleFileSelect();
-            } else if (e.key == "export") {
-              window.open("/api/drive/export", "_blank");
-            }
-          },
-        }}
-        size="small"
-        className="mr-2"
-        onClick={() => {
-          showModal();
-        }}
-      >
-        {isAdd ? <PlusOutlined /> : <EditOutlined />}
-      </Dropdown.Button>
+      {isAdd ? (
+        <Dropdown className="mr-2" menu={menuProps}>
+          <Button size="small">
+            <PlusOutlined />
+          </Button>
+        </Dropdown>
+      ) : (
+        <Dropdown.Button
+          menu={{
+            items: isAdd
+              ? [
+                  {
+                    key: "import",
+                    label: "导入配置",
+                  },
+                  {
+                    key: "export",
+                    label: "导出配置",
+                  },
+                ]
+              : [
+                  {
+                    key: "add",
+                    label: "添加作业",
+                  },
+                ],
+            onClick: (e) => {
+              if (e.key == "add") {
+                onJobAdd && onJobAdd();
+              } else if (e.key == "import") {
+                handleFileSelect();
+              } else if (e.key == "export") {
+                window.open("/api/drive/export", "_blank");
+              }
+            },
+          }}
+          size="small"
+          className="mr-2"
+          onClick={() => {
+            showModal();
+          }}
+        >
+          {isAdd ? <PlusOutlined /> : <EditOutlined />}
+        </Dropdown.Button>
+      )}
 
       <Modal
         title="阿里云盘授权"
@@ -398,7 +491,7 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
         onCancel={hideModal}
         width={760}
         footer={
-          <div>
+          <div className="flex flex-row space-x-2 items-center justify-end">
             <Button
               disabled={driveInfo?.isMount}
               loading={saveing}
@@ -607,6 +700,55 @@ const OAuthComponent: React.FC<OAuthComponentProps> = ({
             )}
           </div>
         </Spin>
+      </Modal>
+
+      <Modal
+        title="本地存储配置"
+        open={isModalVisibleLocal}
+        onCancel={() => {
+          setIsModalVisibleLocal(false);
+          onClose && onClose();
+        }}
+        width={760}
+        footer={
+          <div className="flex flex-row space-x-2 items-center justify-end">
+            <Button loading={saveing} onClick={onSaveLocal} type="primary">
+              保存
+            </Button>
+            <Button
+              onClick={() => {
+                setIsModalVisibleLocal(false);
+                onClose && onClose();
+              }}
+              type="default"
+            >
+              取消
+            </Button>
+          </div>
+        }
+      >
+        <Form
+          className="py-6"
+          form={formLocal}
+          labelCol={{ span: 4 }}
+          wrapperCol={{ span: 18 }}
+        >
+          <Form.Item
+            label="工作组名称"
+            required
+            help={
+              <>
+                <span>创建本地存储工作组后，才能添加作业。</span>
+              </>
+            }
+          >
+            <Input
+              placeholder="请输入工作组名称"
+              value={nameLocal}
+              onChange={(e) => setNameLocal(e.target.value)}
+            />
+          </Form.Item>
+        </Form>
       </Modal>
 
       <input

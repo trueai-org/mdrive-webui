@@ -26,6 +26,18 @@ export interface IDrive {
   expandedRowKeys?: Key[];
 }
 
+export interface ILocalStorageConfig {
+  id: string;
+  name: string;
+  jobs: IDriveJob[];
+
+  expandedRowKeys?: Key[];
+}
+
+export interface LocalStorageEditRequest{
+  name: string;
+}
+
 export interface IDriveMountConfig {
   mountReadOnly?: boolean;
   mountDrive?: string;

@@ -1,3 +1,5 @@
+// 阿里云盘存储相关请求
+
 import axios from "axios";
 import {
   DownloadManagerSetting,
@@ -18,8 +20,8 @@ const api = axios.create({});
  * @returns
  */
 export const getDrives = async () => {
-  const response = await api.get<IDrive[]>("/api/drive/drives");
-  return response.data;
+  const response = await api.get<IResult<IDrive[]>>("/api/drive/drives");
+  return response.data.data;
 };
 
 /**
@@ -302,7 +304,6 @@ export const getPaths = async (path: string = "") => {
   });
   return response.data;
 };
-
 
 // 封装上传文件
 export const uploadFile = async (formData: FormData) => {

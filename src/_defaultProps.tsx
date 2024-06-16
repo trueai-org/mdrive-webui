@@ -2,6 +2,7 @@ import {
   SmileFilled,
   SettingFilled,
   // InfoCircleFilled,
+  LikeTwoTone,
   GithubFilled,
 } from "@ant-design/icons";
 
@@ -29,6 +30,11 @@ export default {
         path: "https://github.com/trueai-org/mdrive",
         name: "官网",
         icon: <GithubFilled />,
+      },
+      {
+        path: "/support",
+        name: "赞助",
+        icon: <LikeTwoTone />,
       },
     ],
   },

@@ -5,7 +5,6 @@ import {
   IDriveJob,
   ILocalStorageConfig,
   IResult,
-  JobState,
   LocalStorageEditRequest,
 } from "./model";
 
@@ -29,7 +28,7 @@ export const getStorages = async (): Promise<
  * 获取所有工作组的作业
  * @returns 工作组作业数组
  */
-export const getJobs = async (): Promise<IResult<IDriveJob[]>> => {
+export const getLocalJobs = async (): Promise<IResult<IDriveJob[]>> => {
   const response = await api.get<IResult<IDriveJob[]>>("/api/local/jobs");
   return response.data;
 };
@@ -100,9 +99,9 @@ export const addJob = async (
  * @param state 新状态
  * @returns 结果
  */
-export const changeJobState = async (
+export const changeLocalJobState = async (
   jobId: string,
-  state: JobState
+  state: any
 ): Promise<IResult> => {
   const response = await api.put<IResult>(`/api/local/job/${jobId}/${state}`);
   return response.data;

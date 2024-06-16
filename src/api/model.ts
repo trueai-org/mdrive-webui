@@ -49,7 +49,6 @@ export interface IDriveMountConfig {
 }
 
 export interface IDriveJob {
-  isMount?: boolean;
   id: string;
   name: string;
   description: string;
@@ -60,8 +59,6 @@ export interface IDriveJob {
   sources: string[];
   target: string;
   restore?: string;
-  rapidUpload: boolean;
-  defaultDrive: string;
   checkAlgorithm: string;
   checkLevel: number;
   fileWatcher: boolean;
@@ -71,13 +68,18 @@ export interface IDriveJob {
   uploadThread: number;
   downloadThread: number;
   metadata?: IJobMetadata;
-  mountConfig?: IDriveMountConfig;
   isEncrypt?: boolean;
   isEncryptName?: boolean;
   hashAlgorithm: string;
   encryptAlgorithm: string;
   encryptKey: string;
   compressAlgorithm: string;
+  
+  // 阿里云盘专属
+  isMount?: boolean;
+  mountConfig?: IDriveMountConfig;
+  defaultDrive?: string;
+  rapidUpload?: boolean;
 
   // 前台展示
   mountReadOnly?: boolean;

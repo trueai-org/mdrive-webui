@@ -11,8 +11,6 @@ import {
   message,
   TreeSelect,
   TreeSelectProps,
-  AutoComplete,
-  Divider,
 } from "antd";
 import {
   FolderTwoTone,
@@ -23,15 +21,10 @@ import {
 } from "@ant-design/icons";
 
 import { IDriveJob } from "@/api/model";
-import {
-  addJob,
-  getCronTags,
-  getPaths,
-  getPoints,
-  updateJob,
-  updateSetMount,
-  updateSetUnmount,
-} from "@/api";
+
+import { getCronTags, getPaths } from "@/api";
+import { addJob, updateJob } from "@/api/local";
+
 import { DefaultOptionType } from "antd/es/select";
 
 const { Step } = Steps;
@@ -46,7 +39,7 @@ interface JobEditModalProps {
   currentDriveId?: string;
 }
 
-const JobEditModal: React.FC<JobEditModalProps> = ({
+const JobEditModalLocal: React.FC<JobEditModalProps> = ({
   visible,
   onOk,
   onCancel,
@@ -58,8 +51,6 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
   const [allStepsData, setAllStepsData] = useState<IDriveJob>();
   const [saveing, setSaveing] = useState(false);
   const [cronTags, setCronTags] = useState<string[]>([]);
-  const [pointOptions, setPointOptions] = useState<{ value: string }[]>([]);
-  const [point, setPoint] = useState<string>();
 
   const [showPwd, setShowPwd] = useState<boolean>();
 
@@ -69,83 +60,149 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
     });
     getPaths().then((res) => {
       if (res.success) {
-        const us = res
-          .data!.filter((x) => x.id.includes("%"))
-          .map((x) => {
-            return {
-              title: x.text,
-              label: x.text,
-              value: x.resolvedpath || x.id,
-              key: x.resolvedpath || x.id,
-              icon: <FolderTwoTone />,
-              children: [],
-            };
-          });
-        const cs = res
-          .data!.filter((x) => !x.id.includes("%"))
-          .map((x) => {
-            return {
-              title: x.text,
-              label: x.text,
-              value: x.id,
-              key: x.id,
-              icon: <FolderTwoTone />,
-              children: [],
-            };
-          });
-        const rs: DefaultOptionType[] = [];
-        if (us.length > 0) {
-          rs.push({
-            title: "用户数据",
-            label: "用户数据",
-            value: ":user",
-            key: ":user",
-            icon: <UserOutlined className="text-[#1677FF]" />,
-            children: us,
-            checkable: false,
-          });
-        }
-        if (cs.length > 0) {
-          rs.push({
-            title: "计算机",
-            label: "计算机",
-            value: ":jsj",
-            key: ":jsj",
-            icon: <HomeTwoTone />,
-            children: cs,
-            checkable: false,
-          });
-        }
-        // rs.push({
-        //   title: "源数据",
-        //   label: "源数据",
-        //   value: ":sources",
-        //   key: ":sources",
-        //   icon: <FolderOpenTwoTone />,
-        //   children: value?.map((x) => {
-        //     return {
-        //       title: x,
-        //       label: x,
-        //       value: ":" + x,
-        //       key: ":" + x,
-        //       icon: <FolderTwoTone />,
-        //       checked: true,
-        //       isLeaf: true,
-        //     };
-        //   }),
-        //   checkable: false,
-        // });
+        if (true!) {
+          const us = res
+            .data!.filter((x) => x.id.includes("%"))
+            .map((x) => {
+              return {
+                title: x.text,
+                label: x.text,
+                value: x.resolvedpath || x.id,
+                key: x.resolvedpath || x.id,
+                icon: <FolderTwoTone />,
+                children: [],
+              };
+            });
+          const cs = res
+            .data!.filter((x) => !x.id.includes("%"))
+            .map((x) => {
+              return {
+                title: x.text,
+                label: x.text,
+                value: x.id,
+                key: x.id,
+                icon: <FolderTwoTone />,
+                children: [],
+              };
+            });
+          const rs: DefaultOptionType[] = [];
+          if (us.length > 0) {
+            rs.push({
+              title: "用户数据",
+              label: "用户数据",
+              value: ":user",
+              key: ":user",
+              icon: <UserOutlined className="text-[#1677FF]" />,
+              children: us,
+              checkable: false,
+            });
+          }
+          if (cs.length > 0) {
+            rs.push({
+              title: "计算机",
+              label: "计算机",
+              value: ":jsj",
+              key: ":jsj",
+              icon: <HomeTwoTone />,
+              children: cs,
+              checkable: false,
+            });
+          }
+          // rs.push({
+          //   title: "源数据",
+          //   label: "源数据",
+          //   value: ":sources",
+          //   key: ":sources",
+          //   icon: <FolderOpenTwoTone />,
+          //   children: value?.map((x) => {
+          //     return {
+          //       title: x,
+          //       label: x,
+          //       value: ":" + x,
+          //       key: ":" + x,
+          //       icon: <FolderTwoTone />,
+          //       checked: true,
+          //       isLeaf: true,
+          //     };
+          //   }),
+          //   checkable: false,
+          // });
 
-        setPaths(rs);
-      }
-    });
-    getPoints().then((res) => {
-      if (res.success) {
-        setPointOptions(
-          res.data?.map((x) => {
-            return { value: x };
-          }) || []
-        );
+          setPaths(rs);
+        }
+
+        if (true!) {
+          const us = res
+            .data!.filter((x) => x.id.includes("%"))
+            .map((x) => {
+              return {
+                title: x.text,
+                label: x.text,
+                value: x.resolvedpath || x.id,
+                key: x.resolvedpath || x.id,
+                icon: <FolderTwoTone />,
+                children: [],
+              };
+            });
+          const cs = res
+            .data!.filter((x) => !x.id.includes("%"))
+            .map((x) => {
+              return {
+                title: x.text,
+                label: x.text,
+                value: x.id,
+                key: x.id,
+                icon: <FolderTwoTone />,
+                children: [],
+              };
+            });
+          const rs: DefaultOptionType[] = [];
+          if (us.length > 0) {
+            rs.push({
+              title: "用户数据",
+              label: "用户数据",
+              value: ":user",
+              key: ":user",
+              icon: <UserOutlined className="text-[#1677FF]" />,
+              children: us,
+              checkable: false,
+              disabled: true,
+            });
+          }
+          if (cs.length > 0) {
+            rs.push({
+              title: "计算机",
+              label: "计算机",
+              value: ":jsj",
+              key: ":jsj",
+              icon: <HomeTwoTone />,
+              children: cs,
+              checkable: false,
+              disabled: true,
+            });
+          }
+          // rs.push({
+          //   title: "源数据",
+          //   label: "源数据",
+          //   value: ":sources",
+          //   key: ":sources",
+          //   icon: <FolderOpenTwoTone />,
+          //   children: value?.map((x) => {
+          //     return {
+          //       title: x,
+          //       label: x,
+          //       value: ":" + x,
+          //       key: ":" + x,
+          //       icon: <FolderTwoTone />,
+          //       checked: true,
+          //       isLeaf: true,
+          //     };
+          //   }),
+          //   checkable: false,
+          // });
+
+          setPathTargets(rs);
+        }
       }
     });
   }, []);
@@ -164,7 +221,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
       setAllStepsData(jobConfig);
       form.setFieldsValue(jobConfig);
       setValue(jobConfig.sources || []);
-      setPoint(jobConfig.mountPoint);
+      setValueTarget(jobConfig.target || "");
     }
   }, [visible, jobConfig, form]);
 
@@ -205,13 +262,8 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
     form
       .validateFields()
       .then((values) => {
+ 
         const value: IDriveJob = { ...allStepsData, ...values };
-
-        value.mountConfig = {
-          mountPoint: value.mountPoint,
-          mountReadOnly: value.mountReadOnly,
-          mountOnStartup: value.mountOnStartup,
-        };
 
         setAllStepsData(value);
 
@@ -333,101 +385,93 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
     }
   };
 
-  const onMount = () => {
-    if (!jobConfig.id) {
-      message.error("保存作业后才能执行挂载磁盘");
-      return;
-    }
+  // 树下拉选择框 - 目标
+  const [showTreeSelectTarget, setShowTreeSelectTarget] = useState(true);
+  const [valueTarget, setValueTarget] = useState<string>(() => {
+    return jobConfig?.target || "";
+  });
+  const [pathTargets, setPathTargets] = useState<DefaultOptionType[]>([]);
+  const onChangeTarget = (newValue: string) => {
 
-    if (!point) {
-      message.error("请选择或输入挂载点");
-      return;
-    }
+    setValueTarget(newValue);
+    setAllStepsData((prev) => {
+      if (prev) {
+        prev.target = newValue;
+      }
+      return prev;
+    });
 
-    setSaveing(true);
-
-    form
-      .validateFields()
-      .then((values) => {
-        const value: IDriveJob = { ...allStepsData, ...values };
-
-        value.mountConfig = {
-          mountPoint: value.mountPoint,
-          mountReadOnly: value.mountReadOnly,
-          mountOnStartup: value.mountOnStartup,
-        };
-
-        setAllStepsData(value);
-
-        if (value.id) {
-          // 先保存作业
-          updateJob(value).then((res) => {
-            if (res?.success) {
-              // message.success("操作成功");
-              // setVisibleEditJob(false);
-              // loadDrives();
-
-              // 然后挂载磁盘
-              updateSetMount(jobConfig.id)
-                .then((res) => {
-                  if (res.success) {
-                    // message.success("操作成功");
-                    message.success(
-                      "挂载成功，首次初始化列表需要1~5分钟，请耐心等待"
-                    );
-                    onOk && onOk();
-                  } else {
-                    message.error(res.message || "操作失败");
-                  }
-                })
-                .finally(() => setSaveing(false));
-            } else {
-              message.error(res?.message || "操作失败");
-              setSaveing(false);
-            }
-          });
-        } else {
-          // 新增
-          addJob(currentDriveId!, value)
-            .then((res) => {
-              if (res?.success) {
-                message.warning("添加作业成功，请重新设置挂载");
-                // setVisibleEditJob(false);
-                // loadDrives();
-                onOk && onOk();
-              } else {
-                message.error(res?.message || "操作失败");
-              }
-            })
-            .finally(() => setSaveing(false));
-        }
-      })
-      .catch((errorInfo) => {
-        message.error(errorInfo?.errorFields[0].errors[0]);
-        setSaveing(false);
-      });
+    // const ss = {
+    //   title: "源数据",
+    //   label: "源数据",
+    //   value: ":sources",
+    //   key: ":sources",
+    //   icon: <FolderOpenTwoTone />,
+    //   children: value?.map((x) => {
+    //     return {
+    //       title: x,
+    //       label: x,
+    //       value: ":" + x,
+    //       key: ":" + x,
+    //       icon: <FolderTwoTone />,
+    //       checked: true,
+    //       isLeaf: true
+    //     };
+    //   }),
+    //   checkable: false,
+    // };
+    // setPaths((prevPaths) => {
+    //   return prevPaths.map((path) => (path.key === ":sources" ? ss : path));
+    // });
   };
 
-  const onUnmount = () => {
-    if (!jobConfig.id) {
-      message.error("保存作业后才能执行挂载磁盘");
-      return;
-    }
+  // 递归更新
+  const updateTreeDataTarget: any = (
+    list: any[],
+    key: any,
+    children: any[]
+  ) => {
+    return list.map((node) => {
+      if (node.key === key) {
+        return { ...node, children };
+      }
+      if (node.children && node.children.length > 0) {
+        return {
+          ...node,
+          children: updateTreeDataTarget(node.children, key, children),
+        };
+      }
+      return node;
+    });
+  };
 
-    if (!point) {
-      message.error("请选择或输入挂载点");
-      return;
-    }
+  const onLoadDataTarget: TreeSelectProps["loadData"] = async (node) => {
+    if (!node.key || node.key.toString().startsWith(":")) return;
+    try {
+      const res = await getPaths(node.key as string);
+      if (res.success) {
+        const childNodes = res.data?.map((x) => ({
+          title: x.text,
+          label: x.text,
+          value: x.id,
+          key: x.id,
+          children: [],
+          icon: <FolderTwoTone />,
+        }));
 
-    setSaveing(true);
-    updateSetUnmount(jobConfig.id)
-      .then((res) => {
-        if (res.success) {
-          message.success("操作成功");
-          onOk && onOk();
-        } else message.error(res.message || "操作失败");
-      })
-      .finally(() => setSaveing(false));
+        setPathTargets((prevPaths) =>
+          updateTreeDataTarget(prevPaths, node.key, childNodes || [])
+        );
+
+        // setPaths((prevPaths) => {
+        //   return prevPaths.map((path) =>
+        //     path.key === node.key ? { ...path, children: childNodes } : path
+        //   );
+        // });
+      }
+    } catch (error) {
+      message.error("加载子文件夹时出错");
+    }
   };
 
   // 写一个随机 16~32 位的密码随机
@@ -462,7 +506,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
 
   return (
     <Modal
-      title="阿里云盘作业配置"
+      title="本地存储作业配置"
       open={visible}
       onOk={handleSubmit}
       onCancel={onCancel}
@@ -493,15 +537,11 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
         <Step title="基本信息" />
         <Step title="作业配置" />
         <Step title="高级设置" />
-        <Step title="挂载配置" />
       </Steps>
 
-      <Form
-        disabled={jobConfig?.isMount}
-        form={form}
-        labelCol={{ span: 6 }}
-        wrapperCol={{ span: 18 }}
-      >
+      <Form form={form} labelCol={{ span: 6 }} wrapperCol={{ span: 18 }}>
+        {valueTarget}
+
         {currentStep == 0 && (
           <>
             <Form.Item
@@ -692,24 +732,45 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
 
             <Form.Item
               required
-              name="defaultDrive"
-              label="目标位置"
-              tooltip="阿里云盘的存储位置，个人私有文件建议存储到备份盘"
-            >
-              <Select>
-                <Select.Option value="backup">备份盘</Select.Option>
-                <Select.Option value="resource">资源库</Select.Option>
-              </Select>
-            </Form.Item>
-            <Form.Item
-              required
-              name="target"
               label="目标目录"
-              tooltip="云盘存储路径，远程备份/同步存储的路径"
-              help="路径格式：/文件夹/文件夹/文件夹，示例：backup/mdrive"
+              tooltip="目标存储路径，远程备份/同步存储的路径"
+              help="请选择或输入本地文件夹，支持多选，例如：E:\test, E:\kopia"
             >
-              <Input />
+              {showTreeSelectTarget ? (
+                <TreeSelect
+                  treeData={pathTargets}
+                  onChange={onChangeTarget}
+                  treeIcon
+                  style={{
+                    width: "100%",
+                  }}
+                  allowClear
+                  treeDefaultExpandedKeys={[":user", ":jsj", ":sources"]}
+                  placeholder={"请选择文件夹"}
+                  showCheckedStrategy={SHOW_PARENT}
+                  value={valueTarget}
+                  loadData={onLoadDataTarget}
+                  treeNodeLabelProp="key"
+                />
+              ) : (
+                <Input
+                  onChange={(e) => {
+                    onChangeTarget(e.target.value);
+                  }}
+                  value={valueTarget}
+                  placeholder={"请输入粘贴文件夹路径"}
+                />
+              )}
+              <span
+                className="cursor-pointer text-blue-500 block py-1"
+                onClick={() => {
+                  setShowTreeSelectTarget(!showTreeSelectTarget);
+                }}
+              >
+                {showTreeSelectTarget ? "切换为输入文件夹" : "切换为选择文件夹"}
+              </span>
             </Form.Item>
+
             <Form.Item
               name="filters"
               label="过滤文件"
@@ -735,14 +796,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
             >
               <Input />
             </Form.Item>
-            <Form.Item
-              name="rapidUpload"
-              label="启用秒传"
-              valuePropName="checked"
-              tooltip="是否启用阿里云盘秒传功能"
-            >
-              <Checkbox />
-            </Form.Item>
+
             <Form.Item
               name="isRecycleBin"
               label="启用回收站"
@@ -820,102 +874,6 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
             </Form.Item>
           </>
         )}
-        {currentStep == 3 && (
-          <>
-            <Form.Item
-              tooltip="云盘挂载到本地磁盘的位置"
-              label="挂载点"
-              help={
-                <span>
-                  如果你想将云盘的备份目录挂载到本地磁盘，像访问本地磁盘一样访问云盘，请设置挂载到磁盘的位置。
-                  <br />
-                  确保挂载的磁盘盘符没有被占用，Linux 确保是空的文件夹。
-                  <br />
-                  windows 示例：C:\，linux 示例：/tmp。
-                  <br />
-                  <span>
-                    请确保已安装磁盘驱动，下载驱动：
-                    <a href="/driver/Dokan_x64.msi" target="_blank">
-                      Windows_x64.msi
-                    </a>
-                    <Divider type="vertical" />
-                    <a href="/driver/Dokan_x86.msi" target="_blank">
-                      Windows_x86.msi
-                    </a>
-                  </span>
-                </span>
-              }
-            >
-              <AutoComplete
-                options={pointOptions}
-                placeholder="请输入或选择挂载点"
-                value={point}
-                onChange={(v) => {
-                  setPoint(v);
-                  setAllStepsData((prev) => {
-                    if (prev) {
-                      prev.mountPoint = v;
-                    }
-                    return prev;
-                  });
-                }}
-              />
-              {jobConfig.id && (
-                <div className="flex flex-row items-center py-2">
-                  {jobConfig.isMount ? (
-                    <div className="flex flex-row items-center">
-                      <span className="text-green-400">当前已挂载磁盘</span>
-                      <span className="text-gray-400">
-                        （挂载中不可修改配置）
-                      </span>
-                      <Divider type="vertical" className="ml-4" />
-                      <Button
-                        loading={saveing}
-                        size="small"
-                        type="link"
-                        onClick={onUnmount}
-                        disabled={false}
-                      >
-                        卸载挂载
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-row items-center">
-                      <span className="text-gray-400">
-                        当前未挂载到本地磁盘
-                      </span>
-                      <Divider type="vertical" className="ml-4" />
-                      <Button
-                        loading={saveing}
-                        size="small"
-                        type="link"
-                        onClick={onMount}
-                      >
-                        立即挂载
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </Form.Item>
-            <Form.Item
-              name="mountOnStartup"
-              label="自动挂载"
-              tooltip="作业启动后，立即挂载磁盘"
-              valuePropName="checked"
-            >
-              <Checkbox />
-            </Form.Item>
-            <Form.Item
-              name="mountReadOnly"
-              label="只读模式"
-              tooltip="以只读模式挂载阿里云盘时，无法对文件修改删除等"
-              valuePropName="checked"
-            >
-              <Checkbox />
-            </Form.Item>
-          </>
-        )}
       </Form>
 
       <div className="pt-3 items-center justify-center w-full flex">
@@ -924,7 +882,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
             上一步
           </Button>
         )}
-        {currentStep < 3 && (
+        {currentStep < 2 && (
           <Button ghost type="primary" onClick={() => next()}>
             下一步
           </Button>
@@ -934,4 +892,4 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
   );
 };
 
-export default JobEditModal;
+export default JobEditModalLocal;

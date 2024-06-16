@@ -62,16 +62,17 @@ import {
   ILocalStorageConfig,
   JobState,
 } from "./api/model";
+
 import { formatFileSize, getJobStateTag } from "./utils";
 import OAuthComponent from "./components/OAuthComponent";
 import JobEditModal from "./components/JobEditModal";
 import defaultProps from "./_defaultProps";
+import DownloadManager from "./components/DownloadManager";
+import { getStorages, getLocalJobs, changeLocalJobState } from "./api/local";
+import OAuthComponentLocal from "./components/OAuthComponentLocal";
 
 import "./App.css";
-
-import DownloadManager from "./components/DownloadManager";
-import { getStorages } from "./api/local";
-import OAuthComponentLocal from "./components/OAuthComponentLocal";
+import JobEditModalLocal from "./components/JobEditModalLocal";
 
 // 下载状态类型
 type DownloadingState = {
@@ -462,21 +463,39 @@ function App() {
 
   const tblRef: Parameters<typeof Table>[0]["ref"] = React.useRef(null);
   const data = React.useMemo(() => files, [files]);
-  const onJobMenu = (e: MenuInfo, jobId: string) => {
+
+  const onJobMenu = (e: MenuInfo, jobId: string, isali = true) => {
     setLoading(true);
-    updateJobState(jobId, e.key)
-      .then((res) => {
-        if (res?.success) {
-          message.success("操作成功");
-          loadDrives();
-        } else {
-          message.error(res?.message || "操作失败");
-        }
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+
+    if (isali) {
+      updateJobState(jobId, e.key)
+        .then((res) => {
+          if (res?.success) {
+            message.success("操作成功");
+            loadDrives();
+          } else {
+            message.error(res?.message || "操作失败");
+          }
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    } else {
+      changeLocalJobState(jobId, e.key)
+        .then((res) => {
+          if (res?.success) {
+            message.success("操作成功");
+            loadDrives();
+          } else {
+            message.error(res?.message || "操作失败");
+          }
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
   };
+
   const menuItems: MenuProps["items"] = [
     {
       key: JobState.Continue,
@@ -511,6 +530,7 @@ function App() {
       label: "删除",
     },
   ];
+
   const getMenuItems = (stateValue: JobState) => {
     switch (stateValue) {
       case JobState.None:
@@ -613,11 +633,12 @@ function App() {
   };
 
   // 加载本地存储
-  const [localStorages, setLocalStorages] = useState<ILocalStorageConfig[]>();
+  const [localStorageConfigs, setLocalStorageConfigs] =
+    useState<ILocalStorageConfig[]>();
   const loadLocalStorages = () => {
     setLoading(true);
     getStorages().then((c) => {
-      setLocalStorages(c.data || []);
+      setLocalStorageConfigs(c.data || []);
       setLoading(false);
     });
   };
@@ -694,10 +715,22 @@ function App() {
 
   // 显示编辑
   const [visibleEditJob, setVisibleEditJob] = useState(false);
+
   // 当前编辑的作业
   const [currentEditJob, setCurrentEditJob] = useState<IDriveJob | null>(null);
+
   // 当前编辑的云盘 ID
   const [currentDriveId, setCurrentDriveId] = useState<string>();
+
+  // 显示编辑
+  const [visibleEditJobByLocal, setVisibleEditJobByLocal] = useState(false);
+
+  // 当前编辑的作业
+  const [currentEditJobByLocal, setCurrentEditJobByLocal] =
+    useState<IDriveJob | null>(null);
+
+  // 当前编辑的云盘 ID
+  const [currentDriveIdByLocal, setCurrentDriveIdByLocal] = useState<string>();
 
   /**
    * 作业编辑
@@ -742,6 +775,49 @@ function App() {
       compressAlgorithm: "Zstd",
     });
     setVisibleEditJob(true);
+  };
+
+  /**
+   * 作业添加 - 本地存储
+   * @param job
+   */
+  const onJobAddLocal = (driveId: string) => {
+    setCurrentDriveIdByLocal(driveId);
+    setCurrentEditJobByLocal({
+      id: "",
+      name: "",
+      description: "",
+      state: JobState.None,
+      mode: 0,
+      checkLevel: 1,
+      checkAlgorithm: "sha256",
+      order: 0,
+      isTemporary: false,
+      isRecycleBin: true,
+      uploadThread: 0,
+      downloadThread: 0,
+      schedules: [],
+      filters: [],
+      fileWatcher: true,
+      target: "",
+      sources: [],
+      isEncrypt: false,
+      isEncryptName: false,
+      hashAlgorithm: "SHA256",
+      encryptAlgorithm: "AES256-GCM",
+      encryptKey: "",
+      compressAlgorithm: "Zstd",
+    });
+    setVisibleEditJobByLocal(true);
+  };
+
+  /**
+   * 作业编辑 - 本地存储
+   * @param job
+   */
+  const onJobEditLocal = (job: IDriveJob) => {
+    setCurrentEditJobByLocal(job);
+    setVisibleEditJobByLocal(true);
   };
 
   /**
@@ -899,6 +975,50 @@ function App() {
     // 只有状态变化时，检查更新
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataJobStates]);
+
+  // 检查作业状态
+  const { data: dataLocalJobStates, refetch: localRefetch } = useQuery({
+    queryKey: [`lolcaljobs`],
+    queryFn: async () => {
+      const res = await getLocalJobs();
+      return res.data;
+    },
+    staleTime: 60 * 1000, // 60s 缓存
+    refetchInterval: 1 * 1000, // 1 秒查询一次
+  });
+  useEffect(() => {
+    localRefetch();
+  }, [localRefetch]);
+
+  useEffect(() => {
+    if (dataLocalJobStates && localStorageConfigs) {
+      // 创建 localstorages 的深拷贝
+      const locals = localStorageConfigs.map((drive) => ({
+        ...drive,
+        jobs: drive.jobs.map((job) => {
+          // const updatedJob = dataJobStates.find((d) => d.id === job.id);
+          // return updatedJob ? { ...job, state: updatedJob.state } : job;
+
+          const updatedJob = dataLocalJobStates.find((d) => d.id === job.id);
+          if (updatedJob) {
+            // 这里更新多个字段
+            return {
+              ...job,
+              state: updatedJob.state,
+              metadata: updatedJob.metadata,
+            };
+          }
+          return job;
+        }),
+      }));
+
+      // 使用新的 localstorages 数组来更新状态
+      setLocalStorageConfigs(locals);
+    }
+
+    // 只有状态变化时，检查更新
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataLocalJobStates]);
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
@@ -1132,9 +1252,9 @@ function App() {
             })}
 
           {/* 本地存储 */}
-          {localStorages &&
-            localStorages.length > 0 &&
-            localStorages?.map((c, i) => {
+          {localStorageConfigs &&
+            localStorageConfigs.length > 0 &&
+            localStorageConfigs?.map((c, i) => {
               return (
                 <ProList<{
                   job: IDriveJob;
@@ -1156,7 +1276,7 @@ function App() {
                       <OAuthComponentLocal
                         config={c}
                         onOk={loadLocalStorages}
-                        onJobAdd={() => onJobAdd(c.id)}
+                        onJobAdd={() => onJobAddLocal(c.id)}
                       />,
                     ];
                   }}
@@ -1177,10 +1297,13 @@ function App() {
                       job: x,
                     };
                   })}
-                  onRow={(r) => {
+                  onRow={() => {
                     return {
                       onClick: () => {
-                        onSelectJob(r.job);
+                        // onSelectJob(r.job);
+                        message.warning(
+                          "本地存储作业不支持在线预览，请自行打开目标磁盘查看！"
+                        );
                       },
                     };
                   }}
@@ -1228,10 +1351,10 @@ function App() {
                             menu={{
                               items: getMenuItems(r.job.state),
                               onClick: (e) => {
-                                onJobMenu(e, r.job.id);
+                                onJobMenu(e, r.job.id, false);
                               },
                             }}
-                            onClick={() => onJobEdit(r.job)}
+                            onClick={() => onJobEditLocal(r.job)}
                           >
                             <EditOutlined />
                           </Dropdown.Button>
@@ -1243,6 +1366,7 @@ function App() {
               );
             })}
         </ProCard>
+
         <ProCard
           bodyStyle={{ margin: 0, padding: 0 }}
           headerBordered
@@ -1325,6 +1449,19 @@ function App() {
         onCancel={onJobSaveCancel}
         jobConfig={currentEditJob!}
         currentDriveId={currentDriveId}
+      />
+
+      <JobEditModalLocal
+        visible={visibleEditJobByLocal}
+        onOk={() => {
+          setVisibleEditJobByLocal(false);
+          loadLocalStorages();
+        }}
+        onCancel={() => {
+          setVisibleEditJobByLocal(false);
+        }}
+        jobConfig={currentEditJobByLocal!}
+        currentDriveId={currentDriveIdByLocal}
       />
 
       {/* <Modal

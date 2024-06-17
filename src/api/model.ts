@@ -85,6 +85,9 @@ export interface IDriveJob {
   mountReadOnly?: boolean;
   mountOnStartup?: boolean;
   mountPoint?: string;
+
+  // 是否为阿里云存储，否则为本地存储
+  isAliyunDrive?: boolean;  
 }
 
 export interface IJobMetadata {
@@ -242,6 +245,50 @@ export interface DownloadTask {
   durationString: string;
   durationSeconds: number;
 
+  isLocalFile?: boolean;
   totalBytes: number;
   downloadedBytes: number;
+}
+
+
+/**
+ * 本地存储文件基本信息
+ */
+export interface ILocalStorageFileInfo {
+  /** 相对路径 key {xxx}/{xxx}.xx */
+  key: string;
+  /** 包含文件名的完整路径 */
+  fullName: string;
+  /** 文件/文件夹的父级文件夹完整路径 */
+  parentFullName: string;
+  /** 文件名 */
+  name: string;
+  /** 文件大小（字节数） */
+  length: number;
+  /** 获取或设置文件的创建时间 */
+  creationTime: Date;
+  /** 获取或设置上次写入文件的时间 */
+  lastWriteTime: Date;
+  /** 文件 Hash 值（本地文件 hash），说明：扫描本地文件时，不计算 Hash 值，只有在同步时才计算 */
+  hash: string;
+  /** 是否为文件 */
+  isFile: boolean;
+  /** 是否隐藏 */
+  isHidden: boolean;
+  /** 是否只读 */
+  isReadOnly: boolean;
+  /** 是否存在 */
+  isExists: boolean;
+}
+
+/**
+* 本地存储目标文件信息
+*/
+export interface ILocalStorageTargetFileInfo extends ILocalStorageFileInfo {
+  /** 本地文件原始 Hash（未加密前） */
+  localFileHash?: string;
+  /** 本地文件原始名称（未加密前的），格式：1.txt */
+  localFileName?: string;
+  /** 本地文件的 Key */
+  localFileKey?: string;
 }

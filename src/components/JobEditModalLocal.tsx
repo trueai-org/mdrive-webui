@@ -262,7 +262,6 @@ const JobEditModalLocal: React.FC<JobEditModalProps> = ({
     form
       .validateFields()
       .then((values) => {
- 
         const value: IDriveJob = { ...allStepsData, ...values };
 
         setAllStepsData(value);
@@ -392,7 +391,6 @@ const JobEditModalLocal: React.FC<JobEditModalProps> = ({
   });
   const [pathTargets, setPathTargets] = useState<DefaultOptionType[]>([]);
   const onChangeTarget = (newValue: string) => {
-
     setValueTarget(newValue);
     setAllStepsData((prev) => {
       if (prev) {
@@ -540,8 +538,6 @@ const JobEditModalLocal: React.FC<JobEditModalProps> = ({
       </Steps>
 
       <Form form={form} labelCol={{ span: 6 }} wrapperCol={{ span: 18 }}>
-        {valueTarget}
-
         {currentStep == 0 && (
           <>
             <Form.Item
@@ -579,12 +575,21 @@ const JobEditModalLocal: React.FC<JobEditModalProps> = ({
             <Form.Item
               name="mode"
               label="同步模式"
-              help="镜像：以本地为主，如果远程和本地不一致则删除远程文件；备份：以本地为主，将本地备份到远程，不删除远程文件；双向：双向同步，同时保留，冲突的文件重新命名。"
+              help={
+                <>
+                  <span>
+                    镜像：镜像同步模式，将本地内容同步到远程，删除目标位置和本地不一致的文件；
+                  </span>
+                  <br />
+                  <span>
+                    备份：冗余备份模式，将本地内容同步到远程，不删除目标位置冗余的文件；
+                  </span>
+                </>
+              }
             >
               <Select>
                 <Select.Option value={0}>镜像</Select.Option>
                 <Select.Option value={1}>备份</Select.Option>
-                <Select.Option value={2}>双向</Select.Option>
               </Select>
             </Form.Item>
             <Form.Item

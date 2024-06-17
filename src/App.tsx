@@ -60,6 +60,7 @@ import {
   IDriveFile,
   IDriveJob,
   ILocalStorageConfig,
+  ILocalStorageTargetFileInfo,
   JobState,
 } from "./api/model";
 
@@ -68,7 +69,13 @@ import OAuthComponent from "./components/OAuthComponent";
 import JobEditModal from "./components/JobEditModal";
 import defaultProps from "./_defaultProps";
 import DownloadManager from "./components/DownloadManager";
-import { getStorages, getLocalJobs, changeLocalJobState } from "./api/local";
+import {
+  getStorages,
+  getLocalJobs,
+  changeLocalJobState,
+  getLocalFiles,
+  getLocalFile,
+} from "./api/local";
 import OAuthComponentLocal from "./components/OAuthComponentLocal";
 
 import "./App.css";
@@ -97,6 +104,10 @@ function App() {
   const [currentFile, setCurrentFile] = useState<IDriveFile>();
   const [rootFileId, setRootFileId] = useState<string>();
 
+  const [localFiles, setLocalFiles] = useState<ILocalStorageTargetFileInfo[]>();
+  const [currentLocalFile, setCurrentLocalFile] =
+    useState<ILocalStorageTargetFileInfo>();
+
   // 使用状态来追踪每个文件的下载状态
   const [downloading, setDownloading] = useState<DownloadingState>({});
 
@@ -123,7 +134,53 @@ function App() {
           fileName: c.data.fileName,
           fileId: c.data.fileId,
           jobId: c.data.jobId,
+          isLocalFile: false,
         });
+        // 显示下载弹窗
+        setDownloadModalVisible(true);
+      }
+    });
+  };
+
+  // 更新下载状态的函数
+  const handleDownloadLocal = (lf: ILocalStorageTargetFileInfo) => {
+    if (!job) {
+      return;
+    }
+    setDownloading((prev) => ({ ...prev, [lf.key]: true }));
+    getDownloadSettings().then((res) => {
+      setDownloading((prev) => ({ ...prev, [lf.key]: false }));
+      if (res.data) {
+        // 更新下载信息状态
+        setDownloadInfo({
+          url: lf.fullName,
+          downloadPath: res.data.defaultDownload,
+          fileName: lf.localFileName || lf.name,
+          fileId: lf.key,
+          jobId: job.id,
+          isLocalFile: true
+        });
+        // 显示下载弹窗
+        setDownloadModalVisible(true);
+      }
+    });
+  };
+
+  const addDownloadSelectedLocalTasks = async () => {
+    if (!job) {
+      return;
+    }
+
+    getDownloadSettings().then((res) => {
+      if (res.data) {
+        // 更新下载信息状态
+        setDownloadInfo({
+          downloadPath: res.data.defaultDownload,
+          fileIds: selectedRowKeys.map((x) => x.toString()),
+          jobId: job.id,
+          isLocalFile: true
+        });
+
         // 显示下载弹窗
         setDownloadModalVisible(true);
       }
@@ -142,6 +199,7 @@ function App() {
           downloadPath: res.data.defaultDownload,
           fileIds: selectedRowKeys.map((x) => x.toString()),
           jobId: job.id,
+          isLocalFile: false
         });
 
         // 显示下载弹窗
@@ -159,6 +217,7 @@ function App() {
     fileName?: string;
     fileId?: string;
     fileIds?: string[];
+    isLocalFile?: boolean;
   }>({
     url: "",
     downloadPath: "",
@@ -181,6 +240,7 @@ function App() {
           fileName: downloadInfo.fileName,
           jobId: downloadInfo.jobId,
           fileId: downloadInfo.fileId,
+          isLocalFile: downloadInfo.isLocalFile,
         })
           .then(() => {
             // console.log("r", r);
@@ -197,6 +257,7 @@ function App() {
           jobId: downloadInfo.jobId,
           fileIds: selectedRowKeys.map((x) => x.toString()),
           filePath: downloadInfo.downloadPath,
+          IsLocalFile: downloadInfo.isLocalFile,
         })
           .then(() => {
             setDownloadTaskLoading(false);
@@ -380,7 +441,7 @@ function App() {
     {
       title: "大小",
       dataIndex: "size",
-      width: 120,
+      width: 100,
       fixed: "left",
       align: "right",
       render: (text) => <span>{text ? formatFileSize(text) : "-"}</span>,
@@ -461,8 +522,97 @@ function App() {
     },
   ];
 
+  const fixedLocalColumns: ColumnsType<ILocalStorageTargetFileInfo> = [
+    {
+      title: "名称",
+      dataIndex: "name",
+      fixed: "left",
+      render: (_, r) => {
+        // 如果是加密文件，增加追加显示锁图标
+        const icon = job && job.isEncrypt && (
+          <LockTwoTone twoToneColor="#eb2f96" style={{ marginRight: 4 }} />
+        );
+
+        if (!r.isFile) {
+          return (
+            <div
+              onClick={() => {
+                onSelectLocalFolder(r);
+              }}
+              className="space-x-1 text-base flex items-center cursor-pointer hover:text-blue-500"
+            >
+              {icon}
+              <FolderOutlined />
+              <span>{r.localFileName || r.name}</span>
+            </div>
+          );
+        }
+
+        return (
+          <Tooltip placement="left" title={r.name}>
+            <div className="space-x-1 text-base flex items-center cursor-pointer hover:text-blue-500">
+              {icon}
+              <span>{r.localFileName || r.name}</span>
+            </div>
+          </Tooltip>
+        );
+      },
+    },
+    {
+      title: "大小",
+      dataIndex: "length",
+      width: 100,
+      fixed: "left",
+      align: "right",
+      render: (text) => <span>{text ? formatFileSize(text) : "-"}</span>,
+    },
+    {
+      title: "修改时间",
+      dataIndex: "lastWriteTime",
+      width: 160,
+      align: "right",
+      render: (text) => (text ? format(text, "yyyy-MM-dd hh:mm:ss") : "-"),
+    },
+    {
+      title: "操作",
+      key: "action",
+      width: 80,
+      align: "center",
+      render: (_, r) => {
+        if (r.isFile) {
+          return (
+            <Button
+              type="primary"
+              ghost
+              size="small"
+              icon={<DownloadOutlined />}
+              loading={downloading[r.key] || false}
+              disabled={downloading[r.key] || false}
+              onClick={() => {
+                handleDownloadLocal(r);
+              }}
+            ></Button>
+          );
+        }
+        return "-";
+      },
+    },
+  ];
+
   const tblRef: Parameters<typeof Table>[0]["ref"] = React.useRef(null);
-  const data = React.useMemo(() => files, [files]);
+  const data = React.useMemo(() => {
+    if (job && job.isAliyunDrive == true) {
+      return files;
+    }
+    return [];
+  }, [files, job]);
+
+  const dataLocals = React.useMemo(() => {
+    if (job && job.isAliyunDrive != true) {
+      return localFiles;
+    }
+    return [];
+  }, [localFiles, job]);
 
   const onJobMenu = (e: MenuInfo, jobId: string, isali = true) => {
     setLoading(true);
@@ -608,6 +758,14 @@ function App() {
     )}`;
   }, [files]);
 
+  const currentLocalInfo = React.useMemo(() => {
+    return `包含 ${localFiles?.filter((x) => x.isFile).length || 0} 个文件，${
+      localFiles?.filter((x) => !x.isFile).length || 0
+    } 个文件夹，总大小 ${formatFileSize(
+      localFiles?.filter((x) => x.isFile).reduce((c, d) => c + d.length, 0) || 0
+    )}`;
+  }, [localFiles]);
+
   const currentPathInfo = React.useMemo(() => {
     if (!job) {
       return "/";
@@ -627,6 +785,11 @@ function App() {
   const loadDrives = () => {
     setLoading(true);
     getDrives().then((c) => {
+      c?.forEach((x) => {
+        x.jobs.forEach((j) => {
+          j.isAliyunDrive = true;
+        });
+      });
       setDrives(c || []);
       setLoading(false);
     });
@@ -644,7 +807,7 @@ function App() {
   };
 
   /**
-   * 加载文件
+   * 加载 drive 文件
    * @param jobId
    * @param parentId
    */
@@ -666,14 +829,51 @@ function App() {
   };
 
   /**
+   * 加载 local 文件
+   * @param jobId
+   * @param parentId
+   */
+  const loadLocalFiles = (jobId: string, parentFullName?: string) => {
+    setTableLoading(true);
+    getLocalFiles(jobId, parentFullName)
+      .then((c) => {
+        setLocalFiles(c);
+
+        // 如果没有父级时，说明查询的是根目录
+        if (!parentFullName) {
+          setCurrentLocalFile(undefined);
+        }
+
+        // // 如果没有父级时，说明查询的是根目录
+        // if (parentFullName && c && c.length > 0) {
+        //   getLocalFile(jobId, c[0].key).then((x) => {
+        //     setCurrentLocalFile(x);
+        //   });
+        // }
+      })
+      .finally(() => setTableLoading(false));
+  };
+
+  /**
    * 选择作业
    * @param j
    */
   const onSelectJob = (j: IDriveJob) => {
     // 非禁用、删除
-    if (j.state != JobState.Disabled && j.state != JobState.Initializing) {
+    if (
+      j.isAliyunDrive == true &&
+      j.state != JobState.Disabled &&
+      j.state != JobState.Initializing
+    ) {
       setJob(j);
       loadFiles(j.id);
+    } else if (
+      j.isAliyunDrive != true &&
+      j.state != JobState.Disabled &&
+      j.state != JobState.Initializing
+    ) {
+      setJob(j);
+      loadLocalFiles(j.id);
     }
   };
 
@@ -691,6 +891,14 @@ function App() {
   };
 
   /**
+   * 选择文件夹 - 本地存储
+   */
+  const onSelectLocalFolder = (f: ILocalStorageTargetFileInfo) => {
+    setCurrentLocalFile(f);
+    loadLocalFiles(job!.id, f.fullName);
+  };
+
+  /**
    * 返回上一级
    * @param fid
    */
@@ -703,6 +911,27 @@ function App() {
       });
     }
   };
+
+  /**
+   * 返回上一级 - 本地存储
+   * @param fid
+   */
+  const onSelectParentLocalFolder = () => {
+    if (currentLocalFile) {
+      setTableLoading(true);
+      getLocalFile(job!.id, currentLocalFile.parentFullName).then((c) => {
+        if (!c) {
+          setCurrentLocalFile(undefined);
+          setLocalFiles([]);
+          return;
+        }
+
+        setCurrentLocalFile(c);
+        loadLocalFiles(job!.id, c.fullName);
+      });
+    }
+  };
+
   /**
    * 返回根目录
    * @param fid
@@ -1297,13 +1526,13 @@ function App() {
                       job: x,
                     };
                   })}
-                  onRow={() => {
+                  onRow={(r) => {
                     return {
                       onClick: () => {
-                        // onSelectJob(r.job);
-                        message.warning(
-                          "本地存储作业不支持在线预览，请自行打开目标磁盘查看！"
-                        );
+                        onSelectJob(r.job);
+                        // message.warning(
+                        //   "本地存储作业不支持在线预览，请自行打开目标磁盘查看！"
+                        // );
                       },
                     };
                   }}
@@ -1374,72 +1603,151 @@ function App() {
           ref={welRef2}
           extra={<DownloadManager />}
         >
-          <div className="flex px-6 py-4 flex-col w-full space-y-3 overflow-y-auto">
-            <div className="flex flex-row space-x-2 items-center w-full">
-              <Button
-                onClick={() => onSelectRootFolder()}
-                disabled={!job || rootFileId == currentFile?.file_id}
-                icon={<HomeOutlined />}
-              ></Button>
-              <Button
-                icon={<RollbackOutlined />}
-                onClick={() => onSelectParentFolder()}
-                disabled={!job || rootFileId == currentFile?.file_id}
-              ></Button>
-              <Input
-                style={{ width: "100%" }}
-                value={currentPathInfo}
-                placeholder="文件夹"
-              />
-              <Button
-                onClick={() => onSelectFolder(currentFile!)}
-                disabled={!job}
-                icon={<ReloadOutlined />}
-              ></Button>
-              {/* <Button icon={<CloudUploadOutlined />}></Button> */}
-            </div>
-            <Table
-              virtual
-              columns={fixedColumns}
-              scroll={{ x: 400, y: 400 }}
-              rowKey="file_id"
-              dataSource={data || []}
-              pagination={false}
-              ref={tblRef}
-              size="small"
-              loading={tableLoading}
-              rowSelection={{
-                type: "checkbox",
-                selectedRowKeys,
-                onChange: setSelectedRowKeys,
-                columnWidth: 50,
-              }}
-            />
-
-            <div className="flex flex-row items-center justify-between">
-              {job && (
-                <div className="text-xs text-gray-600">{currentInfo}</div>
-              )}
-
-              <div>
+          {job && job.isAliyunDrive ? (
+            <div className="flex px-6 py-4 flex-col w-full space-y-3 overflow-y-auto">
+              <div className="flex flex-row space-x-2 items-center w-full">
                 <Button
-                  type="primary"
-                  ghost
-                  icon={<DownloadOutlined />}
-                  disabled={selectedRowKeys.length === 0}
-                  onClick={addDownloadSelectedTasks}
-                >
-                  批量下载
-                </Button>
+                  onClick={() => onSelectRootFolder()}
+                  disabled={!job || rootFileId == currentFile?.file_id}
+                  icon={<HomeOutlined />}
+                ></Button>
+                <Button
+                  icon={<RollbackOutlined />}
+                  onClick={() => onSelectParentFolder()}
+                  disabled={!job || rootFileId == currentFile?.file_id}
+                ></Button>
+                <Input
+                  style={{ width: "100%" }}
+                  value={currentPathInfo}
+                  placeholder="文件夹"
+                />
+                <Button
+                  onClick={() => onSelectFolder(currentFile!)}
+                  disabled={!job}
+                  icon={<ReloadOutlined />}
+                ></Button>
+                {/* <Button icon={<CloudUploadOutlined />}></Button> */}
               </div>
+              <Table
+                virtual
+                columns={fixedColumns}
+                scroll={{ x: 400, y: 400 }}
+                rowKey="file_id"
+                dataSource={data || []}
+                pagination={false}
+                ref={tblRef}
+                size="small"
+                loading={tableLoading}
+                rowSelection={{
+                  type: "checkbox",
+                  selectedRowKeys,
+                  onChange: setSelectedRowKeys,
+                  columnWidth: 50,
+                }}
+              />
+
+              <div className="flex flex-row items-center justify-between">
+                {job && (
+                  <div className="text-xs text-gray-600">{currentInfo}</div>
+                )}
+
+                <div>
+                  <Button
+                    type="primary"
+                    ghost
+                    icon={<DownloadOutlined />}
+                    disabled={selectedRowKeys.length === 0}
+                    onClick={addDownloadSelectedTasks}
+                  >
+                    批量下载
+                  </Button>
+                </div>
+              </div>
+              {/* <Input.TextArea
+                className="bg-gray-50"
+                rows={4}
+                placeholder="日志"
+                maxLength={6}
+              /> */}
             </div>
-            {/* <Input.TextArea
+          ) : (
+            job && (
+              <div className="flex px-6 py-4 flex-col w-full space-y-3 overflow-y-auto">
+                <div className="flex flex-row space-x-2 items-center w-full">
+                  <Button
+                    onClick={() => onSelectRootFolder()}
+                    disabled={
+                      !currentLocalFile ||
+                      currentLocalFile.fullName == job.target
+                    }
+                    icon={<HomeOutlined />}
+                  ></Button>
+                  <Button
+                    icon={<RollbackOutlined />}
+                    onClick={() => onSelectParentLocalFolder()}
+                    disabled={
+                      !currentLocalFile ||
+                      currentLocalFile.fullName == job.target
+                    }
+                  ></Button>
+                  <Input
+                    style={{ width: "100%" }}
+                    value={currentLocalFile?.fullName || job.target}
+                    placeholder="文件夹"
+                  />
+                  <Button
+                    onClick={() => onSelectLocalFolder(currentLocalFile!)}
+                    disabled={!currentLocalFile}
+                    icon={<ReloadOutlined />}
+                  ></Button>
+                  {/* <Button icon={<CloudUploadOutlined />}></Button> */}
+                </div>
+                <Table
+                  virtual
+                  columns={fixedLocalColumns}
+                  scroll={{ x: 400, y: 400 }}
+                  rowKey="key"
+                  dataSource={dataLocals || []}
+                  pagination={false}
+                  ref={tblRef}
+                  size="small"
+                  loading={tableLoading}
+                  rowSelection={{
+                    type: "checkbox",
+                    selectedRowKeys,
+                    onChange: setSelectedRowKeys,
+                    columnWidth: 50,
+                  }}
+                />
+
+                <div className="flex flex-row items-center justify-between">
+                  {job && (
+                    <div className="text-xs text-gray-600">
+                      {currentLocalInfo}
+                    </div>
+                  )}
+
+                  <div>
+                    <Button
+                      type="primary"
+                      ghost
+                      icon={<DownloadOutlined />}
+                      disabled={selectedRowKeys.length === 0}
+                      onClick={addDownloadSelectedLocalTasks}
+                    >
+                      批量下载
+                    </Button>
+                  </div>
+                </div>
+                {/* <Input.TextArea
               className="bg-gray-50"
               rows={4}
               placeholder="日志"
               maxLength={6}
             /> */}
-          </div>
+              </div>
+            )
+          )}
         </ProCard>
       </ProCard>
 
@@ -1476,7 +1784,7 @@ function App() {
             <div>
               多平台、模块化、安全的云盘同步工具备份，支持百度网盘、阿里云盘等，集成
               Duplicati、Kopia
-              等多种模块，支持加密还原等，支持单向、镜像、双向等同步备份，完全免费开源。
+              等多种模块，支持加密还原等，支持镜像、备份同步模式，完全免费开源。
             </div>
             <div>
               提供 Docker 版、Duplicati 版、Kopia 版、Windows 服务版、Windows
@@ -1628,7 +1936,7 @@ function App() {
                 </span>
                 等功能，支持容灾恢复，即便损坏{" "}
                 <span className="text-red-400">99%</span>{" "}
-                的文件，仍可支持恢复，支持单向、镜像、双向等同步/备份，软件完全免费开源，
+                的文件，仍可支持恢复，支持镜像、备份同步模式，软件完全免费开源，
                 <span className="font-bold">
                   任何第三方或服务商都无查看您的数据，保证您的数据安全!
                 </span>

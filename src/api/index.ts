@@ -102,10 +102,10 @@ export const getCronTags = async () => {
  * @returns
  */
 export const getDriveFiles = async (jobId: string, parentId?: string) => {
-  const response = await api.get<IDriveFile[]>(
+  const response = await api.get<IResult<IDriveFile[]>>(
     `/api/drive/files/${jobId}?parentId=${parentId || ""}`
   );
-  return response.data;
+  return response.data.data;
 };
 
 /**

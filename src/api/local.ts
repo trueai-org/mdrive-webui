@@ -4,6 +4,7 @@ import axios from "axios";
 import {
   IDriveJob,
   ILocalStorageConfig,
+  ILocalStorageTargetFileInfo,
   IResult,
   LocalStorageEditRequest,
 } from "./model";
@@ -105,4 +106,32 @@ export const changeLocalJobState = async (
 ): Promise<IResult> => {
   const response = await api.put<IResult>(`/api/local/job/${jobId}/${state}`);
   return response.data;
+};
+
+
+/**
+ * 获取本地存储文件列表
+ * @param jobId
+ * @param parentId
+ * @returns
+ */
+export const getLocalFiles = async (jobId: string, parentFullName?: string) => {
+  const response = await api.get<IResult<ILocalStorageTargetFileInfo[]>>(
+    `/api/local/files/${jobId}?parentFullName=${parentFullName || ""}`
+  );
+  return response.data.data;
+};
+
+
+/**
+ * 文件文件夹详情 - 本地存储
+ * @param jobId
+ * @param fileId
+ * @returns
+ */
+export const getLocalFile = async (jobId: string, fullName: string) => {
+  const response = await api.get<IResult<ILocalStorageTargetFileInfo>>(
+    `/api/local/file/${jobId}?fullName=${fullName || ""}`
+  );
+  return response.data.data;
 };

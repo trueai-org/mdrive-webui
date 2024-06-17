@@ -23,6 +23,8 @@ import {
   FolderTwoTone,
   UserOutlined,
   HomeTwoTone,
+  DesktopOutlined,
+  CloudOutlined,
 } from "@ant-design/icons";
 import {
   getDownloadTasks,
@@ -401,6 +403,12 @@ const DownloadManager = () => {
         <Tooltip title={text} placement="right">
           <span className="truncate">
             <div className="flex items-center space-x-2">
+              {record.isLocalFile ? (
+                <DesktopOutlined className="text-blue-500" />
+              ) : (
+                <CloudOutlined className="text-blue-500" />
+              )}
+
               {record.isEncrypted && <LockTwoTone twoToneColor="#eb2f96" />}
               <span className="truncate">{text}</span>
             </div>

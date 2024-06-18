@@ -739,7 +739,7 @@ const JobEditModalLocal: React.FC<JobEditModalProps> = ({
               required
               label="目标目录"
               tooltip="目标存储路径，远程备份/同步存储的路径"
-              help="请选择或输入本地文件夹，支持多选，例如：E:\test, E:\kopia"
+              help="请选择或输入本地文件夹，例如：E:\test, E:\kopia"
             >
               {showTreeSelectTarget ? (
                 <TreeSelect

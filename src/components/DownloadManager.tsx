@@ -400,7 +400,7 @@ const DownloadManager = () => {
       dataIndex: "fileName",
       render: (text: string, record: DownloadTask) => (
         // 超出显示 ... 并使用  tootip 显示完整内容
-        <Tooltip title={text} placement="right">
+        <Tooltip title={record.filePath} placement="right">
           <span className="truncate">
             <div className="flex items-center space-x-2">
               {record.isLocalFile ? (

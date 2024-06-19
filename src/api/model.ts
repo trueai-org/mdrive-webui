@@ -248,6 +248,7 @@ export interface DownloadTask {
   isLocalFile?: boolean;
   totalBytes: number;
   downloadedBytes: number;
+  filePath?: string;
 }
 
 

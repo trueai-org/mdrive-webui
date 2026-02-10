@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import type { FC, Key } from "react";
+import { useState, useEffect } from "react";
 import {
   Modal,
   Button,
@@ -28,7 +29,6 @@ import {
 } from "@ant-design/icons";
 import {
   getDownloadTasks,
-  getGlobalDownloadSpeed,
   removeDownloadTask,
   pauseDownloadTask,
   continueDownloadTask,
@@ -41,6 +41,7 @@ import {
 import { ColumnsType } from "antd/es/table";
 import { DefaultOptionType } from "antd/es/select";
 import { DownloadStatus, DownloadTask } from "@/api/model";
+import { DownloadSpeedUpdate } from "@/hooks/useSignalR";
 
 const { SHOW_PARENT } = TreeSelect;
 
@@ -69,7 +70,7 @@ interface SettingsValues {
   downlaodSpeedLimit: number;
 }
 
-const DownloadSettingsModal: React.FC<DownloadSettingsProps> = ({
+const DownloadSettingsModal: FC<DownloadSettingsProps> = ({
   visible,
   onCancel,
   onSave,
@@ -318,31 +319,42 @@ const DownloadSettingsModal: React.FC<DownloadSettingsProps> = ({
   );
 };
 
-const DownloadManager = () => {
+interface DownloadManagerProps {
+  onRegisterTasksCallback: (callback: (tasks: DownloadTask[]) => void) => void;
+  onRegisterSpeedCallback: (callback: (speed: DownloadSpeedUpdate) => void) => void;
+}
+
+const DownloadManager: FC<DownloadManagerProps> = ({
+  onRegisterTasksCallback,
+  onRegisterSpeedCallback,
+}) => {
   const [visible, setVisible] = useState(false);
   const [tasks, setTasks] = useState<DownloadTask[]>([]);
   const [globalSpeed, setGlobalSpeed] = useState("0.00 B/s");
-  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([]);
+
+  // 注册 SignalR 回调
+  useEffect(() => {
+    onRegisterTasksCallback((newTasks: DownloadTask[]) => {
+      setTasks(newTasks);
+    });
+  }, [onRegisterTasksCallback]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetchGlobalSpeed();
-      fetchTasks();
-    }, 1000);
-    return () => clearInterval(interval);
+    onRegisterSpeedCallback((data: DownloadSpeedUpdate) => {
+      setGlobalSpeed(data.speedString);
+    });
+  }, [onRegisterSpeedCallback]);
+
+  // 首次加载获取任务列表
+  useEffect(() => {
+    fetchTasks();
   }, []);
 
   const fetchTasks = async () => {
     const response = await getDownloadTasks();
     if (response.data.success) {
       setTasks(response.data.data!);
-    }
-  };
-
-  const fetchGlobalSpeed = async () => {
-    const response = await getGlobalDownloadSpeed();
-    if (response.data.data) {
-      setGlobalSpeed(response.data.data.speedString);
     }
   };
 
@@ -590,7 +602,7 @@ const DownloadManager = () => {
                     (task) => task.status === DownloadStatus.Completed
                   ).length === 0
                 }
-                key="delete"
+                key="deleteCompleted"
                 onClick={() => {
                   tasks
                     .filter((task) => task.status === DownloadStatus.Completed)
@@ -602,7 +614,7 @@ const DownloadManager = () => {
 
               <Button
                 disabled={selectedRowKeys.length === 0}
-                key="delete"
+                key="deleteSelected"
                 onClick={deleteSelectedTasks}
               >
                 删除选中任务

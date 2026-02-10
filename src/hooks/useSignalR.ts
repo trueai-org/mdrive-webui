@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import * as signalR from "@microsoft/signalr";
+import { DownloadTask } from "@/api/model";
 
 export interface JobStateUpdate {
   id: string;
@@ -13,9 +14,14 @@ export interface JobStateUpdate {
   isMount?: boolean;
 }
 
+export interface DownloadSpeedUpdate {
+  speed: number;
+  speedString: string;
+}
+
 /**
- * SignalR Hook - 用于实时接收作业状态更新
- * 替代原来每秒轮询 getJobs / getLocalJobs 的方式
+ * SignalR Hook - 用于实时接收作业状态、下载任务状态更新
+ * 替代原来每秒轮询的方式
  */
 
 /**
@@ -45,6 +51,8 @@ export function useSignalR(hubUrl: string = "/hubs/job") {
   // 存储回调函数引用，避免重复注册
   const onJobStateChangedRef = useRef<((data: JobStateUpdate) => void) | null>(null);
   const onLocalJobStateChangedRef = useRef<((data: JobStateUpdate) => void) | null>(null);
+  const onDownloadTasksChangedRef = useRef<((data: DownloadTask[]) => void) | null>(null);
+  const onDownloadSpeedChangedRef = useRef<((data: DownloadSpeedUpdate) => void) | null>(null);
 
   // 启动连接
   const startConnection = useCallback(async () => {
@@ -98,6 +106,24 @@ export function useSignalR(hubUrl: string = "/hubs/job") {
       }
     });
 
+    // 下载任务状态变化
+    connection.on("DownloadTasksChanged", (...args: any[]) => {
+      console.log("[SignalR] 收到 DownloadTasksChanged");
+      const tasks = args[0] as DownloadTask[];
+      if (tasks) {
+        onDownloadTasksChangedRef.current?.(tasks);
+      }
+    });
+
+    // 下载速度变化
+    connection.on("DownloadSpeedChanged", (...args: any[]) => {
+      console.log("[SignalR] 收到 DownloadSpeedChanged:", JSON.stringify(args));
+      const data = args[0] as DownloadSpeedUpdate;
+      if (data) {
+        onDownloadSpeedChangedRef.current?.(data);
+      }
+    });
+
     try {
       await connection.start();
       console.log("[SignalR] 已连接到", hubUrl);
@@ -129,6 +155,16 @@ export function useSignalR(hubUrl: string = "/hubs/job") {
     onLocalJobStateChangedRef.current = callback;
   }, []);
 
+  // 注册下载任务状态变化回调
+  const onDownloadTasksChanged = useCallback((callback: (data: DownloadTask[]) => void) => {
+    onDownloadTasksChangedRef.current = callback;
+  }, []);
+
+  // 注册下载速度变化回调
+  const onDownloadSpeedChanged = useCallback((callback: (data: DownloadSpeedUpdate) => void) => {
+    onDownloadSpeedChangedRef.current = callback;
+  }, []);
+
   // 组件挂载时自动连接，卸载时断开
   useEffect(() => {
     startConnection();
@@ -141,6 +177,8 @@ export function useSignalR(hubUrl: string = "/hubs/job") {
     isConnected,
     onJobStateChanged,
     onLocalJobStateChanged,
+    onDownloadTasksChanged,
+    onDownloadSpeedChanged,
     startConnection,
     stopConnection,
   };

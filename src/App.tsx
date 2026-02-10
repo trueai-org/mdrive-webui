@@ -1158,7 +1158,7 @@ function App() {
   ];
 
   // ========= SignalR 实时推送（替代轮询） =========
-  const { onJobStateChanged, onLocalJobStateChanged } = useSignalR("/hubs/job");
+  const { onJobStateChanged, onLocalJobStateChanged, onDownloadTasksChanged, onDownloadSpeedChanged } = useSignalR("/hubs/job");
 
   // 使用 ref 保持对最新 drives / localStorageConfigs 的引用，避免闭包陷阱
   const drivesRef = useRef(drives);
@@ -1567,7 +1567,7 @@ function App() {
           headerBordered
           title={<div className="font-bold mr-6">文件管理</div>}
           ref={welRef2}
-          extra={<DownloadManager />}
+          extra={<DownloadManager onRegisterTasksCallback={onDownloadTasksChanged} onRegisterSpeedCallback={onDownloadSpeedChanged} />}
         >
           {job && job.isAliyunDrive ? (
             <div className="flex px-6 py-4 flex-col w-full space-y-3 overflow-y-auto">

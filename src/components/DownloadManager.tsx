@@ -1,5 +1,5 @@
 import type { FC, Key } from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Modal,
   Button,
@@ -89,6 +89,7 @@ const DownloadSettingsModal: FC<DownloadSettingsProps> = ({
   const [showTreeSelect, setShowTreeSelect] = useState(true);
   const [value, setValue] = useState<string>("");
   const [paths, setPaths] = useState<DefaultOptionType[]>([]);
+  const [pathsLoaded, setPathsLoaded] = useState(false);
 
   const onChange = (newValue: string) => {
     setValue(newValue);
@@ -134,6 +135,9 @@ const DownloadSettingsModal: FC<DownloadSettingsProps> = ({
   };
 
   useEffect(() => {
+    if (!visible || pathsLoaded) return;
+
+    setPathsLoaded(true);
     getPaths().then((res) => {
       if (res.success) {
         const us = res
@@ -208,7 +212,7 @@ const DownloadSettingsModal: FC<DownloadSettingsProps> = ({
         setPaths(rs);
       }
     });
-  }, []);
+  }, [visible]);
 
   const onLoadData: TreeSelectProps["loadData"] = async (node) => {
     if (!node.key || node.key.toString().startsWith(":")) return;
@@ -332,6 +336,7 @@ const DownloadManager: FC<DownloadManagerProps> = ({
   const [tasks, setTasks] = useState<DownloadTask[]>([]);
   const [globalSpeed, setGlobalSpeed] = useState("0.00 B/s");
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([]);
+  const fetchedRef = useRef(false);
 
   // 注册 SignalR 回调
   useEffect(() => {
@@ -348,6 +353,8 @@ const DownloadManager: FC<DownloadManagerProps> = ({
 
   // 首次加载获取任务列表
   useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
     fetchTasks();
   }, []);
 

@@ -53,8 +53,12 @@ const JobEditModalLocal: React.FC<JobEditModalProps> = ({
   const [cronTags, setCronTags] = useState<string[]>([]);
 
   const [showPwd, setShowPwd] = useState<boolean>();
+  const [pathsLoaded, setPathsLoaded] = useState(false);
 
   useEffect(() => {
+    if (!visible || pathsLoaded) return;
+
+    setPathsLoaded(true);
     getCronTags().then((res) => {
       setCronTags(res);
     });
@@ -205,7 +209,7 @@ const JobEditModalLocal: React.FC<JobEditModalProps> = ({
         }
       }
     });
-  }, []);
+  }, [visible]);
 
   useEffect(() => {
     if (form && visible) {
@@ -370,7 +374,7 @@ const JobEditModalLocal: React.FC<JobEditModalProps> = ({
         }));
 
         setPaths((prevPaths) =>
-          updateTreeData(prevPaths, node.key, childNodes || [])
+          updateTreeData(prevPaths, node.key, childNodes || []),
         );
 
         // setPaths((prevPaths) => {
@@ -427,7 +431,7 @@ const JobEditModalLocal: React.FC<JobEditModalProps> = ({
   const updateTreeDataTarget: any = (
     list: any[],
     key: any,
-    children: any[]
+    children: any[],
   ) => {
     return list.map((node) => {
       if (node.key === key) {
@@ -458,7 +462,7 @@ const JobEditModalLocal: React.FC<JobEditModalProps> = ({
         }));
 
         setPathTargets((prevPaths) =>
-          updateTreeDataTarget(prevPaths, node.key, childNodes || [])
+          updateTreeDataTarget(prevPaths, node.key, childNodes || []),
         );
 
         // setPaths((prevPaths) => {
@@ -495,7 +499,7 @@ const JobEditModalLocal: React.FC<JobEditModalProps> = ({
         },
         () => {
           message.error("复制失败");
-        }
+        },
       );
     } catch (error) {
       message.error("复制失败，请手动复制");

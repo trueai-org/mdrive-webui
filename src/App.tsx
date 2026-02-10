@@ -773,7 +773,10 @@ function App() {
     return job?.target + "/";
   }, [job, currentFile]);
 
+  const initRef = useRef(false);
   useEffect(() => {
+    if (initRef.current) return;
+    initRef.current = true;
     loadDrives();
     loadLocalStorages();
   }, []);

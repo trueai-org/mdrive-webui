@@ -62,8 +62,12 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
   const [point, setPoint] = useState<string>();
 
   const [showPwd, setShowPwd] = useState<boolean>();
+  const [pathsLoaded, setPathsLoaded] = useState(false);
 
   useEffect(() => {
+    if (!visible || pathsLoaded) return;
+
+    setPathsLoaded(true);
     getCronTags().then((res) => {
       setCronTags(res);
     });
@@ -148,7 +152,7 @@ const JobEditModal: React.FC<JobEditModalProps> = ({
         );
       }
     });
-  }, []);
+  }, [visible]);
 
   useEffect(() => {
     if (form && visible) {

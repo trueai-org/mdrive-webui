@@ -57,7 +57,7 @@ npx tailwindcss init -p
 yarn add @ant-design/pro-components
 
 # 添加 vite proxy
-用于本地开发的代理，http://localhost:8080
+用于本地开发的代理，http://localhost:18080
 
 # 添加时间格式化
 yarn add date-fns

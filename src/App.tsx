@@ -41,8 +41,6 @@ import { format } from "date-fns";
 import { ColumnsType } from "antd/es/table";
 import { MenuInfo } from "rc-menu/lib/interface";
 import { Select } from "antd/lib";
-import { useQuery } from "@tanstack/react-query";
-
 import {
   addDownloadTask,
   addDownloadTasks,
@@ -51,7 +49,6 @@ import {
   getDriveFiles,
   getDrives,
   getFile,
-  getJobs,
   updateJobState,
 } from "./api";
 
@@ -71,12 +68,12 @@ import defaultProps from "./_defaultProps";
 import DownloadManager from "./components/DownloadManager";
 import {
   getStorages,
-  getLocalJobs,
   changeLocalJobState,
   getLocalFiles,
   getLocalFile,
 } from "./api/local";
 import OAuthComponentLocal from "./components/OAuthComponentLocal";
+import { useSignalR, JobStateUpdate } from "./hooks/useSignalR";
 
 import "./App.css";
 import JobEditModalLocal from "./components/JobEditModalLocal";
@@ -1160,94 +1157,63 @@ function App() {
     },
   ];
 
-  // 检查作业状态
-  const { data: dataJobStates, refetch } = useQuery({
-    queryKey: [`jobs`],
-    queryFn: async () => {
-      const res = await getJobs();
-      return res.data;
-    },
-    staleTime: 60 * 1000, // 60s 缓存
-    refetchInterval: 1 * 1000, // 1 秒查询一次
-  });
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
+  // ========= SignalR 实时推送（替代轮询） =========
+  const { onJobStateChanged, onLocalJobStateChanged } = useSignalR("/hubs/job");
 
+  // 使用 ref 保持对最新 drives / localStorageConfigs 的引用，避免闭包陷阱
+  const drivesRef = useRef(drives);
+  drivesRef.current = drives;
+  const localStorageConfigsRef = useRef(localStorageConfigs);
+  localStorageConfigsRef.current = localStorageConfigs;
+
+  // 注册云盘作业状态变化回调
   useEffect(() => {
-    if (dataJobStates && drives) {
-      // 创建 drives 的深拷贝
-      const newDrives = drives.map((drive) => ({
+    onJobStateChanged((update: JobStateUpdate) => {
+      const currentDrives = drivesRef.current;
+      if (!currentDrives) return;
+
+      const newDrives = currentDrives.map((drive) => ({
         ...drive,
         jobs: drive.jobs.map((job) => {
-          // const updatedJob = dataJobStates.find((d) => d.id === job.id);
-          // return updatedJob ? { ...job, state: updatedJob.state } : job;
-
-          const updatedJob = dataJobStates.find((d) => d.id === job.id);
-          if (updatedJob) {
-            // 这里更新多个字段
+          if (job.id === update.id) {
             return {
               ...job,
-              state: updatedJob.state,
-              metadata: updatedJob.metadata,
-              isMount: updatedJob.isMount,
+              state: update.state,
+              metadata: update.metadata,
+              isMount: update.isMount,
             };
           }
           return job;
         }),
       }));
 
-      // 使用新的 drives 数组来更新状态
       setDrives(newDrives);
-    }
+    });
+  }, [onJobStateChanged]);
 
-    // 只有状态变化时，检查更新
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataJobStates]);
-
-  // 检查作业状态
-  const { data: dataLocalJobStates, refetch: localRefetch } = useQuery({
-    queryKey: [`lolcaljobs`],
-    queryFn: async () => {
-      const res = await getLocalJobs();
-      return res.data;
-    },
-    staleTime: 60 * 1000, // 60s 缓存
-    refetchInterval: 1 * 1000, // 1 秒查询一次
-  });
+  // 注册本地存储作业状态变化回调
   useEffect(() => {
-    localRefetch();
-  }, [localRefetch]);
+    onLocalJobStateChanged((update: JobStateUpdate) => {
+      const currentConfigs = localStorageConfigsRef.current;
+      if (!currentConfigs) return;
 
-  useEffect(() => {
-    if (dataLocalJobStates && localStorageConfigs) {
-      // 创建 localstorages 的深拷贝
-      const locals = localStorageConfigs.map((drive) => ({
+      const locals = currentConfigs.map((drive) => ({
         ...drive,
         jobs: drive.jobs.map((job) => {
-          // const updatedJob = dataJobStates.find((d) => d.id === job.id);
-          // return updatedJob ? { ...job, state: updatedJob.state } : job;
-
-          const updatedJob = dataLocalJobStates.find((d) => d.id === job.id);
-          if (updatedJob) {
-            // 这里更新多个字段
+          if (job.id === update.id) {
             return {
               ...job,
-              state: updatedJob.state,
-              metadata: updatedJob.metadata,
+              state: update.state,
+              metadata: update.metadata,
             };
           }
           return job;
         }),
       }));
 
-      // 使用新的 localstorages 数组来更新状态
       setLocalStorageConfigs(locals);
-    }
-
-    // 只有状态变化时，检查更新
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataLocalJobStates]);
+    });
+  }, [onLocalJobStateChanged]);
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 

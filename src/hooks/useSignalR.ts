@@ -124,10 +124,11 @@ export function useSignalR(hubUrl: string = "/hubs/job") {
       }
     });
 
+    connectionRef.current = connection;
+
     try {
       await connection.start();
       console.log("[SignalR] 已连接到", hubUrl);
-      connectionRef.current = connection;
       setIsConnected(true);
     } catch (err) {
       console.error("[SignalR] 连接失败:", err);
@@ -166,10 +167,27 @@ export function useSignalR(hubUrl: string = "/hubs/job") {
   }, []);
 
   // 组件挂载时自动连接，卸载时断开
+  // 使用 ref 防止 StrictMode 双重挂载导致重复 negotiate
+  const mountedRef = useRef(false);
+  const cleanupTimerRef = useRef<ReturnType<typeof setTimeout>>();
   useEffect(() => {
-    startConnection();
+    // StrictMode 第二次挂载时，取消待执行的断开操作，复用已有连接
+    if (cleanupTimerRef.current) {
+      clearTimeout(cleanupTimerRef.current);
+      cleanupTimerRef.current = undefined;
+    }
+
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      startConnection();
+    }
+
     return () => {
-      stopConnection();
+      mountedRef.current = false;
+      // 延迟断开：如果 StrictMode 紧接着重新挂载，会在上方 clearTimeout 取消
+      cleanupTimerRef.current = setTimeout(() => {
+        stopConnection();
+      }, 100);
     };
   }, [startConnection, stopConnection]);
 
